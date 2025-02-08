@@ -1,4 +1,4 @@
-# TIWMIG
+![img](TIWMIG Logo.png)
 TIWMIG ("This Is Where My Ideas Go") is a mod I'm developing solo where I add whatever comes to mind. It's mainly just a way for me to explore the possibilities in Balatro modding, as well as practice pixel art and staying disciplined in scripting.
 
 I probably won't take content suggestions or sprite submissions. I will, however, enthusiastically regard suggestions on how to improve existing code or art!
