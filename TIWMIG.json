@@ -1,0 +1,15 @@
+{
+	"id": "tiwmig",
+	"prefix": "tiwmig",
+	
+	"name": "TIWMIG",
+	"display_name": "TIWMIG",
+	"author": ["Oinite"],
+	"description": "Adds a bunch of random content that comes to Oinite's mind!",
+	"badge_colour": "DC143C",
+	
+	"version": "0.1.0",
+	"dependencies": ["Steamodded (>=1.0.0~ALPHA-1225a)"],
+	"main_file": "index.lua",
+	"priority": 0
+}

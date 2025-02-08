@@ -1,0 +1,49 @@
+# Table of contents:
+# 1: Implementation of Joker context tiwmig_load_shop
+
+[manifest]
+version = "1.0.0"
+dump_lua = true
+priority = 0
+
+# == 1: Add new Joker context: tiwmig_load_shop, which is sent when the shop fully loads all its items
+[[patches]]
+[patches.pattern]
+target = "game.lua"
+pattern = '''
+                                end
+
+                                G.CONTROLLER:snap_to({node = G.shop:get_UIE_by_ID('next_round_button')})
+'''
+position = "before"
+payload = '''
+for i = 1, #G.jokers.cards do
+    G.jokers.cards[i]:calculate_joker({tiwmig_load_shop = true})
+end
+'''
+match_indent = true
+
+# == 2: Allows Poutine components to bypass Joker slot limits given other components are present
+[[patches]]
+[patches.pattern]
+target = "functions/button_callbacks.lua"
+pattern = "not (card.ability.set == 'Joker' and #G.jokers.cards < G.jokers.config.card_limit + ((card.edition and card.edition.negative) and 1 or 0)) and"
+position = "after"
+payload = '''
+not (card.label == "j_tiwmig_french_fries" and#G.jokers.cards >= G.jokers.config.card_limit and (
+    #SMODS.find_card("j_tiwmig_gravy") > 0 or
+    #SMODS.find_card("j_tiwmig_cheese_curds") > 0 or
+    #SMODS.find_card("j_tiwmig_cheesy_gravy") > 0
+)) and
+not (card.label == "j_tiwmig_gravy" and #G.jokers.cards >= G.jokers.config.card_limit and (
+    #SMODS.find_card("j_tiwmig_cheese_curds") > 0 or
+    #SMODS.find_card("j_tiwmig_french_fries") > 0 or
+    #SMODS.find_card("j_tiwmig_chips_n_cheese") > 0
+)) and
+not (card.label == "j_tiwmig_cheese_curds" and #G.jokers.cards >= G.jokers.config.card_limit and (
+    #SMODS.find_card("j_tiwmig_french_fries") > 0 or
+    #SMODS.find_card("j_tiwmig_gravy") > 0 or
+    #SMODS.find_card("j_tiwmig_frite_sauce") > 0
+)) and
+'''
+match_indent = true
