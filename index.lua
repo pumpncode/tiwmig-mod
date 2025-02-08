@@ -725,8 +725,8 @@ SMODS.Joker { key = "egg",
         }}
     end,
 
-    atlas = "Placeholders",
-    pos = placeholders.joker,
+    atlas = "Joker atlas",
+    pos = {x=3, y=0},
 
     rarity = 1,
     cost = 2,
