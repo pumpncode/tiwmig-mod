@@ -742,6 +742,178 @@ SMODS.Joker { key = "egg",
     end,
 }
 
+-- == JOKER: Shotgun, j_tiwmig_shotgun
+SMODS.Joker { key = "shotgun",
+    config = {
+        extra = {
+            xmult = 4,
+            chamber = {},
+            maxshells = 8
+        }
+    },
+
+    loc_vars = function(self, info_queue, card)
+        -- "2-#1# blank and live shells are loaded;"
+        -- "Shoot on play; only live shells give X#2# Mult;"
+        -- "#3# shells remain"
+        return {vars = {
+            card.ability.extra.maxshells, -- #1#
+            card.ability.extra.xmult,     -- #2#
+            #card.ability.extra.chamber,  -- #3#
+        }}
+    end,
+
+    atlas = "Placeholders",
+    pos = placeholders.joker,
+
+    rarity = 2,
+    cost = 4,
+    unlocked = true,
+    discovered = true,
+    
+    blueprint_compat = true,
+    eternal_compat = true,
+    perishable_compat = true,
+
+    calculate = function(self, card, context)
+        if context.setting_blind and #card.ability.extra.chamber < 1 then
+            -- round(a) = floor(0.5 + a)
+            -- number between 2 and shells = round(rng*(shells-2)) + 2
+            local total_shells = math.floor(0.5 + pseudoseed('shotgun')*(card.ability.extra.maxshells - 2)) + 2
+            local shell_count = {
+                live = math.ceil(total_shells/2),
+                blank = math.floor(total_shells/2)
+            }
+
+            --[[
+
+            -- The difference between blanks and lives can be up to 3
+            -- These conditionals just allow lives to increase
+            if shell_count.blank > 1 and pseudoseed('shotgun1') > 0.5 then
+                shell_count.live = shell_count.live + 1
+                shell_count.blank = shell_count.blank - 1
+            end
+            if shell_count.blank > 1 and pseudoseed('shotgun2') > 0.5 then
+                shell_count.live = shell_count.live + 1
+                shell_count.blank = shell_count.blank - 1
+            end
+
+            ]]
+
+            -- For the messages
+            local shell_count_copy = {
+                live = shell_count.live,
+                blank = shell_count.blank
+            }
+
+            while shell_count.live + shell_count.blank > 0 do
+                -- Note down which of live and blank is max, and which is min
+                local max_shell = math.max(
+                    shell_count.live,
+                    shell_count.blank
+                ) == shell_count.live and "live" or "blank"
+                local min_shell = max_shell == "live" and "blank" or "live"
+                local shell = ""
+
+                -- Randomly pick between live and blank
+                -- We do it this way so that if one of the shells is empty,
+                -- we pick the shell that's not empty *always*
+                if pseudoseed('loading')*(shell_count.live + shell_count.blank) < shell_count[max_shell] then
+                    shell = max_shell
+                else
+                    shell = min_shell
+                end
+
+                -- One shell is taken from either pile and loaded into the chamber
+                shell_count[shell] = shell_count[shell] - 1
+                card.ability.extra.chamber[#card.ability.extra.chamber+1] = shell == "live" and 1 or 0
+            end
+
+            print(card.ability.extra.chamber)
+
+            -- How many live shells?
+            G.E_MANAGER:add_event(Event({
+                blockable = false,
+                func = function()
+                    attention_text({
+                        text = localize{type='variable',key='k_tiwmig_shotgun_load_live',vars={
+                            shell_count_copy.live,
+                            shell_count_copy.live > 1 and "s" or "" -- Add "s" for plural
+                        }},
+                        scale = 0.75, 
+                        hold = 1.5,
+                        backdrop_colour = G.C.RED,
+                        align = 'tm',
+                        major = card,
+                        offset = {x = 0, y = 0.33*G.CARD_H}
+                    })
+                    play_sound('generic1', 1, 0.75)
+                    return true
+                end
+            }))
+
+            -- How many blanks?
+            G.E_MANAGER:add_event(Event({
+                trigger = "after",
+                delay = 1.75,
+                blockable = false,
+                func = function() 
+                    attention_text({
+                        text = localize{type='variable',key='k_tiwmig_shotgun_load_blank',vars={
+                            shell_count_copy.blank,
+                            shell_count_copy.blank > 1 and "s" or "" -- Add "s" for plural
+                        }},
+                        scale = 0.75, 
+                        hold = 1.5,
+                        backdrop_colour = G.C.GREY,
+                        align = 'tm',
+                        major = card,
+                        offset = {x = 0, y = 0.66*G.CARD_H}
+                    })
+                    play_sound('generic1', 1, 0.75)
+                    return true
+                end
+            }))
+
+            -- "Load" each bullet into the shotgun
+            G.E_MANAGER:add_event(Event({
+                trigger = "after",
+                blockable = false,
+                delay = 3,
+                func = function()
+                    for x = 1, total_shells do
+                        G.E_MANAGER:add_event(Event({
+                            delay = 0.35,
+                            trigger = "after",
+                            func = function()
+                                card:juice_up()
+                                play_sound('generic1', 1, 0.75)
+                                return true
+                            end
+                        }))
+                    end
+                    return true
+                end
+            }))
+        elseif context.joker_main and #card.ability.extra.chamber > 0 then
+            -- Going from max to 1 (backwards), stating here for debug's sake
+            local shell = card.ability.extra.chamber[#card.ability.extra.chamber]
+            card.ability.extra.chamber[#card.ability.extra.chamber] = nil
+            
+            if shell == 1 then
+                return {
+                    xmult = card.ability.extra.xmult
+                }
+            else
+                return {
+                    message = localize("k_tiwmig_shotgun_blank"),
+                    colour = G.C.GREY
+                }
+            end
+        end
+    end,
+}
+
 --[[ == JOKER: Ruler of Everything, j_tiwmig_ruler_of_everything
 SMODS.Joker { key = "ruler_of_everything",
     config = {

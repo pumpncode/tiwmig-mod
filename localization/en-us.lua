@@ -90,6 +90,16 @@ Joker = { -- START OF JOKERS
             [[{C:inactive}"hey, it's "egg""{}]],
         }
     },
+    j_tiwmig_shotgun = {
+        name = "Shotgun",
+        text = {
+            "2-#1# {C:inactive}blank{} and {C:red}live{}",
+            "shells are loaded",
+            "Shoot on play; only {C:red}live{}",
+            "shells give {X:mult,C:white}X#2#{} Mult",
+            "{C:red}#3# shells remain{}"
+        }
+    }
 }, -- END OF JOKERS
 
 ---- END OF DESCRIPTIONS
@@ -99,8 +109,14 @@ misc = {
 
 dictionary = {
     k_tiwmig_poutine_eating = "Eating...",
-    k_tiwmig_poutine_eaten = "Eaten!"
-}
+    k_tiwmig_poutine_eaten = "Eaten!",
+    k_tiwmig_shotgun_blank = "Blank..."
+},
+
+v_dictionary = {
+    k_tiwmig_shotgun_load_live  = "#1# live round#2#.",
+    k_tiwmig_shotgun_load_blank = "#1# blank#2#."
+},
 
 ---- END OF MISC
 }
