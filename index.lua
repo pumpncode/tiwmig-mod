@@ -772,7 +772,7 @@ SMODS.Joker { key = "shotgun",
     pos = {x=3,y=1},
 
     rarity = 2,
-    cost = 4,
+    cost = 8,
     unlocked = true,
     discovered = true,
     
