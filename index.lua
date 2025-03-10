@@ -710,7 +710,7 @@ SMODS.Joker { key = "poutine",
     end,
 }
 
--- == JOKER: egg, j_tiwmig_egg
+-- == JOKER: "egg", j_tiwmig_egg
 SMODS.Joker { key = "egg",
     config = {
         extra = {
@@ -748,23 +748,28 @@ SMODS.Joker { key = "shotgun",
         extra = {
             xmult = 4,
             chamber = {},
-            maxshells = 8
+            maxshells = 8,
+            initialshells = {live=0,blank=0}
         }
     },
 
     loc_vars = function(self, info_queue, card)
         -- "2-#1# blank and live shells are loaded;"
         -- "Shoot on play; only live shells give X#2# Mult;"
-        -- "#3# shells remain"
+        -- "#3# live round#4#. #5# blanks."
+        -- "#6# shells remain"
         return {vars = {
             card.ability.extra.maxshells, -- #1#
             card.ability.extra.xmult,     -- #2#
-            #card.ability.extra.chamber,  -- #3#
+            card.ability.extra.initialshells.blank, -- #3#
+            card.ability.extra.initialshells.blank ~= 1 and "s" or "", -- #4#
+            card.ability.extra.initialshells.live, -- #5#
+            #card.ability.extra.chamber,  -- #6#
         }}
     end,
 
-    atlas = "Placeholders",
-    pos = placeholders.joker,
+    atlas = "Joker atlas",
+    pos = {x=3,y=1},
 
     rarity = 2,
     cost = 4,
@@ -829,9 +834,11 @@ SMODS.Joker { key = "shotgun",
                 card.ability.extra.chamber[#card.ability.extra.chamber+1] = shell == "live" and 1 or 0
             end
 
-            print(card.ability.extra.chamber)
+            -- Debug note: shells go from 8, 7, 6... 3, 2, 1
+            -- print(card.ability.extra.chamber)
+            card.ability.extra.initialshells = shell_count_copy
 
-            -- How many live shells?
+            --[[ How many live shells?
             G.E_MANAGER:add_event(Event({
                 blockable = false,
                 func = function()
@@ -850,9 +857,9 @@ SMODS.Joker { key = "shotgun",
                     play_sound('generic1', 1, 0.75)
                     return true
                 end
-            }))
+            }))]]
 
-            -- How many blanks?
+            --[[ How many blanks?
             G.E_MANAGER:add_event(Event({
                 trigger = "after",
                 delay = 1.75,
@@ -873,13 +880,12 @@ SMODS.Joker { key = "shotgun",
                     play_sound('generic1', 1, 0.75)
                     return true
                 end
-            }))
+            }))]]
 
             -- "Load" each bullet into the shotgun
             G.E_MANAGER:add_event(Event({
                 trigger = "after",
                 blockable = false,
-                delay = 3,
                 func = function()
                     for x = 1, total_shells do
                         G.E_MANAGER:add_event(Event({

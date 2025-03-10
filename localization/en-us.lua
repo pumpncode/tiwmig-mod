@@ -87,17 +87,19 @@ Joker = { -- START OF JOKERS
         name = '"egg"',
         text = {
             "{C:blue}+#1#{} Chips",
-            [[{C:inactive}"hey, it's "egg""{}]],
+            [[{C:inactive,s:0.8}"hey, it's "egg""{}]],
         }
     },
     j_tiwmig_shotgun = {
         name = "Shotgun",
         text = {
-            "2-#1# {C:inactive}blank{} and {C:red}live{}",
-            "shells are loaded",
+            "2-#1# {C:inactive}blank{} and {C:red}live{} shells are",
+            "loaded in a random sequence",
             "Shoot on play; only {C:red}live{}",
             "shells give {X:mult,C:white}X#2#{} Mult",
-            "{C:red}#3# shells remain{}"
+            "{s:0.1,C:white}----",
+            "{s:0.7,C:inactive}#3# blank shell#4#. {s:0.7,C:red}#5# live.",
+            "{C:red}#6# shells remain{}"
         }
     }
 }, -- END OF JOKERS
