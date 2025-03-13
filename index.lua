@@ -91,10 +91,15 @@ local tiwmig_define_poutine_fusions = function(card, recipe_table)
                 local other_card_id  = recipe[1]
                 local result_card_id = recipe[2]
                 if (
-                    #SMODS.find_card(other_card_id) > 0 and
-                    not SMODS.find_card(other_card_id)[1].debuff and
-                    not card.debuff
+                    #SMODS.find_card(other_card_id) > 0 and not (
+                        card.debuff or
+                        SMODS.find_card(other_card_id)[1].debuff or
+                        card.ability.extra.being_fused or
+                        SMODS.find_card(other_card_id)[1].ability.extra.being_fused
+                    )
                 ) then
+                    card.ability.extra.being_fused = true
+                    SMODS.find_card(other_card_id)[1].ability.extra.being_fused = true
                     tiwmig_poutine_fusion(card, SMODS.find_card(other_card_id)[1], result_card_id)
                 end
             end
