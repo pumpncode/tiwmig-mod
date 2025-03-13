@@ -18,6 +18,7 @@ I probably won't take content suggestions or sprite submissions. I will, however
   * **Chips n' Cheese** - +$3, +75 Chips
 * **Poutine** - +100 Chips, +16 Mult, and +$4 for the next 10 hands
 * **"egg"** - +9 Chips
+* **Shotgun** - 2-8 blank and live shells are loaded in a random sequence. Shoot on play; only live shells give X4 Mult
 
 # Special thanks
 A huge thank-you to the modding community in the official Balatro Discord server for helping with a variety of modding problems. Thanks to Steamodded for being a really easy framework to work with, and having a comprehensible documentation and example mods.
