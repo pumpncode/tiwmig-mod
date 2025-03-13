@@ -770,6 +770,7 @@ SMODS.Joker { key = "shotgun",
 
     atlas = "Joker atlas",
     pos = {x=3,y=1},
+    display_size = { w = 71*1.3, h = 95*1.3 },
 
     rarity = 2,
     cost = 8,
