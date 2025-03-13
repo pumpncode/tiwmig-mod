@@ -9,7 +9,7 @@
 	"badge_colour": "DC143C",
 	
 	"version": "0.1.0",
-	"dependencies": ["Steamodded (>=1.0.0~ALPHA-1225a)"],
+	"dependencies": ["Steamodded (>=1.0.0~BETA-0312b)"],
 	"main_file": "index.lua",
 	"priority": 0
 }
