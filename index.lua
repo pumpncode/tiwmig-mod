@@ -79,6 +79,30 @@ local tiwmig_poutine_fusion = function(card, target, sum)
     }))
 end
 
+-- == FUNCTION: Poutine fusion macro
+local tiwmig_define_poutine_fusions = function(card, recipe_table)
+    -- This system grants higher priority to items of lower index
+    G.E_MANAGER:add_event(Event({
+        trigger = "after",
+        delay = 0.25, -- Delay needed to account for split moment that both cards are not debuffed (mainly from Commented Out)
+        blockable = false,
+        func = function ()
+            for __,recipe in ipairs(recipe_table) do
+                local other_card_id  = recipe[1]
+                local result_card_id = recipe[2]
+                if (
+                    #SMODS.find_card(other_card_id) > 0 and
+                    not SMODS.find_card(other_card_id)[1].debuff and
+                    not card.debuff
+                ) then
+                    tiwmig_poutine_fusion(card, SMODS.find_card(other_card_id)[1], result_card_id)
+                end
+            end
+            return true
+        end
+    }))
+end
+
 -- == ATLAS: Mod icon
 SMODS.Atlas { key = "modicon",
     path = "tiwmig_mod_icon.png",
@@ -252,13 +276,11 @@ SMODS.Joker { key = "french_fries",
 
 
     add_to_deck = function(self, card, from_debuff)
-        if #SMODS.find_card("j_tiwmig_gravy") > 0 then
-            tiwmig_poutine_fusion(card, SMODS.find_card("j_tiwmig_gravy")[1], "j_tiwmig_frite_sauce")
-        elseif #SMODS.find_card("j_tiwmig_cheese_curds") > 0 then
-            tiwmig_poutine_fusion(card, SMODS.find_card("j_tiwmig_cheese_curds")[1], "j_tiwmig_chips_n_cheese")
-        elseif #SMODS.find_card("j_tiwmig_cheesy_gravy") > 0 then
-            tiwmig_poutine_fusion(card, SMODS.find_card("j_tiwmig_cheesy_gravy")[1], "j_tiwmig_poutine")
-        end
+        tiwmig_define_poutine_fusions(card, {
+            {"j_tiwmig_gravy", "j_tiwmig_frite_sauce"},
+            {"j_tiwmig_cheese_curds", "j_tiwmig_chips_n_cheese"},
+            {"j_tiwmig_cheesy_gravy", "j_tiwmig_poutine"}
+        })
     end,
 
     calculate = function(self, card, context)
@@ -327,13 +349,11 @@ SMODS.Joker { key = "gravy",
     end,
 
     add_to_deck = function(self, card, from_debuff)
-        if #SMODS.find_card("j_tiwmig_cheese_curds") > 0 then
-            tiwmig_poutine_fusion(card, SMODS.find_card("j_tiwmig_cheese_curds")[1], "j_tiwmig_cheesy_gravy")
-        elseif #SMODS.find_card("j_tiwmig_french_fries") > 0 then
-            tiwmig_poutine_fusion(card, SMODS.find_card("j_tiwmig_french_fries")[1], "j_tiwmig_frite_sauce")
-        elseif #SMODS.find_card("j_tiwmig_chips_n_cheese") > 0 then
-            tiwmig_poutine_fusion(card, SMODS.find_card("j_tiwmig_chips_n_cheese")[1], "j_tiwmig_poutine")
-        end
+        tiwmig_define_poutine_fusions(card, {
+            {"j_tiwmig_cheese_curds", "j_tiwmig_cheesy_gravy"},
+            {"j_tiwmig_french_fries", "j_tiwmig_frite_sauce"},
+            {"j_tiwmig_chips_n_cheese", "j_tiwmig_poutine"}
+        })
     end,
 
     calculate = function(self, card, context)
@@ -402,13 +422,11 @@ SMODS.Joker { key = "cheese_curds",
     end,
 
     add_to_deck = function(self, card, from_debuff)
-        if #SMODS.find_card("j_tiwmig_french_fries") > 0 then
-            tiwmig_poutine_fusion(card, SMODS.find_card("j_tiwmig_french_fries")[1], "j_tiwmig_chips_n_cheese")
-        elseif #SMODS.find_card("j_tiwmig_gravy") > 0 then
-            tiwmig_poutine_fusion(card, SMODS.find_card("j_tiwmig_gravy")[1], "j_tiwmig_cheesy_gravy")
-        elseif #SMODS.find_card("j_tiwmig_frite_sauce") > 0 then
-            tiwmig_poutine_fusion(card, SMODS.find_card("j_tiwmig_frite_sauce")[1], "j_tiwmig_poutine")
-        end
+        tiwmig_define_poutine_fusions(card, {
+            {"j_tiwmig_french_fries", "j_tiwmig_chips_n_cheese"},
+            {"j_tiwmig_gravy", "j_tiwmig_cheesy_gravy"},
+            {"j_tiwmig_frite_sauce", "j_tiwmig_poutine"}
+        })
     end,
 
     calculate = function(self, card, context)
@@ -474,9 +492,9 @@ SMODS.Joker { key = "frite_sauce",
     end,
 
     add_to_deck = function(self, card, from_debuff)
-        if #SMODS.find_card("j_tiwmig_cheese_curds") > 0 then
-            tiwmig_poutine_fusion(card, SMODS.find_card("j_tiwmig_cheese_curds")[1], "j_tiwmig_poutine")
-        end
+        tiwmig_define_poutine_fusions(card, {
+            {"j_tiwmig_cheese_curds", "j_tiwmig_poutine"}
+        })
     end,
 
     calculate = function(self, card, context)
@@ -542,9 +560,9 @@ SMODS.Joker { key = "cheesy_gravy",
     end,
 
     add_to_deck = function(self, card, from_debuff)
-        if #SMODS.find_card("j_tiwmig_french_fries") > 0 then
-            tiwmig_poutine_fusion(card, SMODS.find_card("j_tiwmig_french_fries")[1], "j_tiwmig_poutine")
-        end
+        tiwmig_define_poutine_fusions(card, {
+            {"j_tiwmig_french_fries", "j_tiwmig_poutine"}
+        })
     end,
 
     calculate = function(self, card, context)
@@ -614,9 +632,9 @@ SMODS.Joker { key = "chips_n_cheese",
     end,
 
     add_to_deck = function(self, card, from_debuff)
-        if #SMODS.find_card("j_tiwmig_gravy") > 0 then
-            tiwmig_poutine_fusion(card, SMODS.find_card("j_tiwmig_gravy")[1], "j_tiwmig_poutine")
-        end
+        tiwmig_define_poutine_fusions(card, {
+            {"j_tiwmig_gravy", "j_tiwmig_poutine"}
+        })
     end,
 
     calculate = function(self, card, context)
@@ -1009,6 +1027,8 @@ SMODS.Joker { key = "commenting_out",
             end
             card.ability.extra.disabled_joker = G.jokers.cards[my_pos+1]
             SMODS.debuff_card(card.ability.extra.disabled_joker, true, card.ability.extra.uid)
+        elseif card.ability.extra.disabled_joker then
+            SMODS.debuff_card(card.ability.extra.disabled_joker, false, card.ability.extra.uid)
         end
     end end
 }
