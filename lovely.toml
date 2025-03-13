@@ -1,5 +1,6 @@
 # Table of contents:
 # 1: Implementation of Joker context tiwmig_load_shop
+# 2: Poutine component merging
 
 [manifest]
 version = "1.0.0"
@@ -11,9 +12,9 @@ priority = 0
 [patches.pattern]
 target = "game.lua"
 pattern = '''
-                                end
+end
 
-                                G.CONTROLLER:snap_to({node = G.shop:get_UIE_by_ID('next_round_button')})
+G.CONTROLLER:snap_to({node = G.shop:get_UIE_by_ID('next_round_button')})
 '''
 position = "before"
 payload = '''
@@ -45,5 +46,55 @@ not (card.label == "j_tiwmig_cheese_curds" and #G.jokers.cards >= G.jokers.confi
     #SMODS.find_card("j_tiwmig_gravy") > 0 or
     #SMODS.find_card("j_tiwmig_frite_sauce") > 0
 )) and
+'''
+match_indent = true
+
+# == 3: Interecption of Card:calculate_joker value (credits to Airtoum for idea)
+[[patches]]
+[patches.pattern]
+target = "card.lua"
+pattern = '''
+function Card:calculate_joker(context)
+'''
+position = "at"
+payload = '''
+-- Formerly "Card:calculate_joker(context)", which is now the name of the function that intercepts the value that this function returns
+local function calc_joker_func(self, context)
+'''
+match_indent = true
+
+# ----
+
+[[patches]]
+[patches.pattern]
+target = "card.lua"
+pattern = '''
+function Card:is_suit(suit, bypass_debuff, flush_calc)
+'''
+position = "before"
+payload = '''
+-- For the actual Joker calculation function, see "calc_joker_func"
+function Card:calculate_joker(context)
+    local return_value = calc_joker_func(self, context)
+
+    if not return_value then
+        -- Large-Small Boulder
+            -- Rank-based Jokers should only trigger once per card;
+            -- this conditional catches the lower-rank case, if the default-rank case does not result in anything
+        if (context.other_card and 
+            context.other_card.base and 
+            context.other_card.base.id and 
+            #SMODS.find_card("j_tiwmig_large_small_boulder") > 0
+        ) then
+            local oc = context.other_card
+            oc.base.id = oc.base.id == 14 and 2 or math.max(oc.base.id - 1, 2)
+            return_value = calc_joker_func(self, context)
+            oc.base.id = oc.base.id == 2 and 14 or math.min(oc.base.id + 1, 14)
+        end
+    end
+
+    return return_value
+end
+
 '''
 match_indent = true

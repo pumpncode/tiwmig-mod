@@ -101,6 +101,15 @@ Joker = { -- START OF JOKERS
             "{s:0.7,C:inactive}#3# blank shell#4#. {s:0.7,C:red}#5# live.",
             "{C:red}#6# shells remain{}"
         }
+    },
+    j_tiwmig_large_small_boulder = {
+        name = "Large Boulder the Size of a Small Boulder",
+        text = {
+            "All {C:attention}cards{} are",
+            "considered by Jokers",
+            "as {C:blue}also {C:attention}one rank lower",
+            "{C:inactive}(2 -> A -> K)"
+        }
     }
 }, -- END OF JOKERS
 

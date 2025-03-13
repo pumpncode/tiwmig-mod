@@ -921,6 +921,31 @@ SMODS.Joker { key = "shotgun",
     end,
 }
 
+-- == JOKER: Large Boulder the Size of a Small Boulder, j_tiwmig_large_small_boulder
+SMODS.Joker { key = "large_small_boulder",
+    -- This Joker's effect is most evident in section 3 of lovely.toml
+    config = {
+        extra = {},
+    },
+
+    loc_vars = function(self, info_queue, card)
+        -- "All cards are considered one rank lower"
+        return {vars = {}}
+    end,
+
+    atlas = "Placeholders",
+    pos = placeholders.joker,
+
+    rarity = 3,
+    cost = 6,
+    unlocked = true,
+    discovered = true,
+    
+    blueprint_compat = false,
+    eternal_compat = true,
+    perishable_compat = true,
+}
+
 --[[ == JOKER: Ruler of Everything, j_tiwmig_ruler_of_everything
 SMODS.Joker { key = "ruler_of_everything",
     config = {
