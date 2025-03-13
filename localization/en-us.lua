@@ -110,6 +110,13 @@ Joker = { -- START OF JOKERS
             "as {C:blue}also {C:attention}one rank lower",
             "{C:inactive}(2 -> A -> K)"
         }
+    },
+    j_tiwmig_commenting_out = {
+        name = "Commenting Out",
+        text = {
+            "Debuffs the {C:attention}Joker{}",
+            "to the right"
+        }
     }
 }, -- END OF JOKERS
 

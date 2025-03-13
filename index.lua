@@ -947,6 +947,72 @@ SMODS.Joker { key = "large_small_boulder",
     perishable_compat = true,
 }
 
+-- == JOKER: Commenting Out, j_tiwmig_commenting_out
+SMODS.Joker { key = "commenting_out",
+    config = {
+        extra = {
+            disabled_joker = nil,
+            uid = ''
+        },
+    },
+
+    loc_vars = function(self, info_queue, card)
+        -- "Disables the Joker to the right"
+        return {vars = {}}
+    end,
+
+    atlas = "Placeholders",
+    pos = placeholders.joker,
+
+    rarity = 2,
+    cost = 4,
+    unlocked = true,
+    discovered = true,
+    
+    blueprint_compat = false,
+    eternal_compat = true,
+    perishable_compat = true,
+
+    add_to_deck = function(self, card, from_debuff)
+        card.ability.extra.uid = 'tiwmig_commenting_out_' .. tostring(math.random())
+        print(card.ability.extra.uid)
+        local my_pos = nil
+        for i = 1, #G.jokers.cards do
+            if G.jokers.cards[i] == card then
+                my_pos = i
+                break
+            end
+        end
+        if my_pos and G.jokers.cards[my_pos+1] then
+            SMODS.debuff_card(G.jokers.cards[my_pos+1], true, card.ability.extra.uid)
+            card.ability.extra.disabled_joker = G.jokers.cards[my_pos+1]
+        end
+    end,
+
+    remove_from_deck = function(self, card, from_debuff)
+        if card.ability.extra.disabled_joker then
+            SMODS.debuff_card(card.ability.extra.disabled_joker, false, card.ability.extra.uid)
+        end
+    end,
+
+    update = function(self, card, dt) if G.jokers then
+        local my_pos = nil
+        for i = 1, #G.jokers.cards do
+            if G.jokers.cards[i] == card then
+                my_pos = i
+                break
+            end
+        end
+        if my_pos and G.jokers.cards[my_pos+1] then
+            if card.ability.extra.disabled_joker and G.jokers.cards[my_pos+1] ~= card.ability.extra.disabled_joker then
+                SMODS.debuff_card(card.ability.extra.disabled_joker, false, card.ability.extra.uid)
+            end
+            card.ability.extra.disabled_joker = G.jokers.cards[my_pos+1]
+            SMODS.debuff_card(card.ability.extra.disabled_joker, true, card.ability.extra.uid)
+        end
+    end end
+}
+
 --[[ == JOKER: Ruler of Everything, j_tiwmig_ruler_of_everything
 SMODS.Joker { key = "ruler_of_everything",
     config = {
