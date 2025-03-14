@@ -92,7 +92,7 @@ local tiwmig_define_poutine_fusions = function(card, recipe_table)
                 local result_card_id = recipe[2]
                 if (
                     #SMODS.find_card(other_card_id) > 0 and not (
-                        card.debuff or
+                        card.debuff or 
                         SMODS.find_card(other_card_id)[1].debuff or
                         card.ability.extra.being_fused or
                         SMODS.find_card(other_card_id)[1].ability.extra.being_fused
@@ -998,7 +998,6 @@ SMODS.Joker { key = "commenting_out",
 
     add_to_deck = function(self, card, from_debuff)
         card.ability.extra.uid = 'tiwmig_commenting_out_' .. tostring(math.random())
-        print(card.ability.extra.uid)
         local my_pos = nil
         for i = 1, #G.jokers.cards do
             if G.jokers.cards[i] == card then
