@@ -1025,7 +1025,7 @@ SMODS.Joker { key = "commenting_out",
                 break
             end
         end
-        if my_pos and G.jokers.cards[my_pos+1] then
+        if my_pos and G.jokers.cards[my_pos+1] and not card.debuff then
             if card.ability.extra.disabled_joker and G.jokers.cards[my_pos+1] ~= card.ability.extra.disabled_joker then
                 SMODS.debuff_card(card.ability.extra.disabled_joker, false, card.ability.extra.uid)
             end
