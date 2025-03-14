@@ -957,8 +957,8 @@ SMODS.Joker { key = "large_small_boulder",
         return {vars = {}}
     end,
 
-    atlas = "Placeholders",
-    pos = placeholders.joker,
+    atlas = "Joker atlas",
+    pos = {x=3,y=2},
 
     rarity = 3,
     cost = 6,
@@ -984,8 +984,8 @@ SMODS.Joker { key = "commenting_out",
         return {vars = {}}
     end,
 
-    atlas = "Placeholders",
-    pos = placeholders.joker,
+    atlas = "Joker atlas",
+    pos = {x=0, y=3},
 
     rarity = 2,
     cost = 4,
