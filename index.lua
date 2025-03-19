@@ -1,3 +1,7 @@
+SMODS.current_mod.optional_features = {
+    retrigger_joker = true
+}
+
 -- == FUNCTION: Food Joker "consumption"
 local tiwmig_food_eat = function(card)
     -- Taken from Cavendish, ExampleJokersMod (Steamodded example mods)
@@ -126,6 +130,12 @@ local placeholders = {
 -- == ATLAS: Joker atlas
 SMODS.Atlas { key = "Joker atlas",
     path = "tiwmig_joker_atlas.png",
+    px = "71", py = "95",
+}
+
+-- == ATLAS: Character atlas
+SMODS.Atlas { key = "Character atlas",
+    path = "tiwmig_characters_atlas.png",
     px = "71", py = "95",
 }
 
@@ -1036,6 +1046,85 @@ SMODS.Joker { key = "commenting_out",
         end
     end end
 }
+
+--[[ 
+
+-- == JOKER: Prototype, j_tiwmig_prototype
+SMODS.Joker { key = "prototype",
+    config = {
+        extra = {},
+    },
+
+    loc_vars = function(self, info_queue, card)
+        -- "Retriggers the rightmost Joker; distinct from copying a Joker"
+        return {vars = {}}
+    end,
+
+    atlas = "Character atlas",
+    pos = {x=0,y=0},
+    soul_pos = {x=1,y=0},
+
+    rarity = 2,
+    cost = 4,
+    unlocked = true,
+    discovered = true,
+    
+    blueprint_compat = true,
+    eternal_compat = true,
+    perishable_compat = true,
+
+    calculate = function(self, card, context)
+        if context.retrigger_joker_check and not context.retrigger_joker and context.other_card ~= self then
+            if context.other_card == G.jokers.cards[#G.jokers.cards] then
+                return {
+                    message = localize('k_again_ex'),
+                    repetitions = 1,
+                    card = card
+                }
+            end
+        end
+    end,
+}
+
+-- == JOKER: Product, j_tiwmig_product
+SMODS.Joker { key = "product",
+    config = {
+        extra = {},
+    },
+
+    loc_vars = function(self, info_queue, card)
+        -- "Retriggers the left Joker; distinct from copying a Joker"
+        return {vars = {}}
+    end,
+
+    atlas = "Placeholders",
+    pos = placeholders.joker,
+
+    rarity = 2,
+    cost = 4,
+    unlocked = true,
+    discovered = true,
+    
+    blueprint_compat = true,
+    eternal_compat = true,
+    perishable_compat = true,
+
+    calculate = function(self, card, context)
+        if context.retrigger_joker_check and not context.retrigger_joker and context.other_card ~= self then
+            for i = 1, #G.jokers.cards do
+                if G.jokers.cards[i] == card and G.jokers.cards[i-1] and G.jokers.cards[i-1] == context.other_card then
+                    return {
+                        message = localize('k_again_ex'),
+                        repetitions = 1,
+                        card = card
+                    }
+                end
+            end
+        end
+    end,
+}
+
+]]--
 
 --[[ == JOKER: Ruler of Everything, j_tiwmig_ruler_of_everything
 SMODS.Joker { key = "ruler_of_everything",

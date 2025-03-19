@@ -117,6 +117,24 @@ Joker = { -- START OF JOKERS
             "Debuffs the {C:attention}Joker{}",
             "to the right"
         }
+    },
+    j_tiwmig_prototype = {
+        name = "Prototype",
+        text = {
+            "Retriggers the",
+            "rightmost {C:attention}Joker{}",
+            "{C:inactive}(Distinct from",
+            "{C:inactive}copying a Joker)"
+        }
+    },
+    j_tiwmig_product = {
+        name = "Product",
+        text = {
+            "Retriggers the",
+            "left {C:attention}Joker{}",
+            "{C:inactive}(Distinct from",
+            "{C:inactive}copying a Joker)"
+        }
     }
 }, -- END OF JOKERS
 
