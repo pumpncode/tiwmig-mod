@@ -4,7 +4,6 @@ SMODS.Joker { key = "generic_brand",
         extra = {
             discount = 0.30,
         },
-        joker_count = 0, -- More reliable way to count the number of this Joker on hand
     },
 
     loc_vars = function(self, info_queue, card)
@@ -22,38 +21,55 @@ SMODS.Joker { key = "generic_brand",
     unlocked = true,
     discovered = true,
 
-    blueprint_compat = false,
+    blueprint_compat = true,
     eternal_compat = true,
     perishable_compat = true,
     
     -- This is what sets the cost; setting as separate function to reduce amount copypasted
     ability_function = function(self)
-        -- Formula: base_cost*( (1-discount)^joker_count ), rounded up
+        -- Go through each Generic Brand and add successive discounts
         local function discount_group(group)
             if group and group.cards then for k,v in pairs(group.cards) do
-                v.cost = math.ceil(v.base_cost*((1-self.config.extra.discount)^self.config.joker_count))
+                -- Reset cost to normal value (including discount vouchers) to start proper discounting
+                v:set_cost()
+                local calc_cost = v.cost
+
+                -- THEN apply discounts
+                local generics = SMODS.find_card("j_tiwmig_generic_brand")
+                for __,generic in pairs(generics) do
+                    calc_cost = calc_cost*(1-generic.ability.extra.discount)
+                end
+
+                -- Finally do floor
+                v.cost = math.ceil(calc_cost)
             end end
         end
         -- With the above function we can just call it repeatedly for each group with minimal copypasting
-        discount_group(G.shop_jokers)
-        discount_group(G.shop_booster)
-        discount_group(G.shop_vouchers)
+        -- Event so that it only triggers right after the Joker is added
+        G.E_MANAGER:add_event(Event({
+            func = function()
+                discount_group(G.shop_jokers)
+                discount_group(G.shop_booster)
+                discount_group(G.shop_vouchers)
+                return true
+            end
+        }))
     end,
 
-    -- Set *self* joker_count, not card, to keep proper count
     add_to_deck = function(self, card, from_debuff)
-        self.config.joker_count = self.config.joker_count + 1
         self.ability_function(self) -- See? Less copypasting for the same effect -every time-
     end,
 
     remove_from_deck = function(self, card, from_debuff)
-        self.config.joker_count = self.config.joker_count - 1
         self.ability_function(self)
     end,
 
     calculate = function(self, card, context)
-        -- [tiwmig_load_shop] is a custom Joker context, implemented in lovely.toml
-        if context.reroll_shop or context.tiwmig_load_shop then
+        if (
+            context.reroll_shop or
+            context.starting_shop or
+            (context.buying_card and context.card.ability.set == "Voucher") -- Discount vouchers
+        ) then
             self.ability_function(self)
         end
     end
