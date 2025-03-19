@@ -57,6 +57,7 @@ SMODS.Joker { key = "generic_brand",
     end,
 
     add_to_deck = function(self, card, from_debuff)
+        -- Must refer off of "self", the card's Platonic ideal, to use the function
         self.ability_function(self) -- See? Less copypasting for the same effect -every time-
     end,
 
