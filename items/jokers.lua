@@ -943,8 +943,7 @@ SMODS.Joker { key = "commenting_out",
     end end
 }
 
-
-
+--[[ 
 -- == JOKER: Prototype, j_tiwmig_prototype
 SMODS.Joker { key = "prototype",
     config = {
@@ -983,7 +982,6 @@ SMODS.Joker { key = "prototype",
         end
     end,
 }
---[[ 
 -- == JOKER: Product, j_tiwmig_product
 SMODS.Joker { key = "product",
     config = {
