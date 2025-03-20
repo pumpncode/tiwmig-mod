@@ -860,8 +860,7 @@ SMODS.Joker { key = "large_small_boulder",
 SMODS.Joker { key = "commenting_out",
     config = {
         extra = {
-            pos = 0,
-            disabled_joker = nil
+            pos = 0
         },
     },
 
@@ -882,6 +881,10 @@ SMODS.Joker { key = "commenting_out",
     eternal_compat = true,
     perishable_compat = true,
 
+    uid = function(card)
+        return 'tiwmig_commenting_out_' .. tostring(card.ID)
+    end,
+
     -- NOTE: the ID attached to card debuffing is of the form [['tiwmig_commenting_out_' .. tostring(card.ID)]]
     add_to_deck = function(self, card, from_debuff)
         if not from_debuff then
@@ -895,21 +898,22 @@ SMODS.Joker { key = "commenting_out",
             end
             if my_pos and G.jokers.cards[my_pos+1] then
                 SMODS.debuff_card(G.jokers.cards[my_pos+1], true, 'tiwmig_commenting_out_' .. tostring(card.ID))
-                card.ability.extra.disabled_joker = G.jokers.cards[my_pos+1]
+                G_TWMG.commenting_out_targets[self.uid(card)] = G.jokers.cards[my_pos+1]
                 card.ability.extra.pos = my_pos
             end
         end
     end,
 
     remove_from_deck = function(self, card, from_debuff)
-        if card.ability.extra.disabled_joker then
-            SMODS.debuff_card(card.ability.extra.disabled_joker, false, 'tiwmig_commenting_out_' .. tostring(card.ID))
+        if G_TWMG.commenting_out_targets[self.uid(card)] then
+            SMODS.debuff_card(G_TWMG.commenting_out_targets[self.uid(card)], false, 'tiwmig_commenting_out_' .. tostring(card.ID))
+            G_TWMG.commenting_out_targets[self.uid(card)] = nil
         end
     end,
 
     update = function(self, card, dt) if G.jokers then
         local prev_pos = card.ability.extra.pos
-        local prev_disabled_joker = card.ability.extra.disabled_joker
+        local prev_disabled_joker = G_TWMG.commenting_out_targets[self.uid(card)]
 
         local my_pos = nil
         for i = 1, #G.jokers.cards do
@@ -922,20 +926,18 @@ SMODS.Joker { key = "commenting_out",
         -- the or conditional should prevent repeatedly running all of this
         if my_pos then
             if G.jokers.cards[my_pos+1] and (my_pos ~= prev_pos or G.jokers.cards[my_pos+1] ~= prev_disabled_joker) and not card.debuff then
-                print(1)
                 if prev_disabled_joker and G.jokers.cards[my_pos+1] ~= prev_disabled_joker then
-                    SMODS.debuff_card(card.ability.extra.disabled_joker, false, 'tiwmig_commenting_out_' .. tostring(card.ID))
+                    SMODS.debuff_card(G_TWMG.commenting_out_targets[self.uid(card)], false, 'tiwmig_commenting_out_' .. tostring(card.ID))
                 end
 
-                card.ability.extra.disabled_joker = G.jokers.cards[my_pos+1]
-                SMODS.debuff_card(card.ability.extra.disabled_joker, true, 'tiwmig_commenting_out_' .. tostring(card.ID))
+                G_TWMG.commenting_out_targets[self.uid(card)] = G.jokers.cards[my_pos+1]
+                SMODS.debuff_card(G_TWMG.commenting_out_targets[self.uid(card)], true, 'tiwmig_commenting_out_' .. tostring(card.ID))
 
                 card.ability.extra.pos = my_pos
 
             elseif not G.jokers.cards[my_pos+1] and prev_disabled_joker then
-                print(2)
                 SMODS.debuff_card(prev_disabled_joker, false, 'tiwmig_commenting_out_' .. tostring(card.ID))
-                card.ability.extra.disabled_joker = nil
+                G_TWMG.commenting_out_targets[self.uid(card)] = nil
 
                 card.ability.extra.pos = my_pos
             end
