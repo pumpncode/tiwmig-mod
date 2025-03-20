@@ -1,3 +1,6 @@
+-- == VARIABLES
+G_TWMG.max_card_layers = 25
+
 -- == FUNCTION: Localized Joker name shorthand
 G_TWMG.get_j_name = function(joker_key)
     if not G.localization.descriptions.Joker[joker_key] then return joker_key end
