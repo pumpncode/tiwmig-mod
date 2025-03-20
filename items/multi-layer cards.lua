@@ -5,6 +5,7 @@
         {x=1,y=0},
         {x=2,y=0}
     }}
+    These layers are subject to edition shaders
     If soul_pos is defined, that sprite will be placed above all other layers
     
     (Most code inspired/taken from Cryptid mod, which only supports an additional 2 layers per card;
