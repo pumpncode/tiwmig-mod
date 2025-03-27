@@ -1,8 +1,13 @@
 -- == VARIABLES
-G_TWMG.max_card_layers = 25
+G_TWMG.max_card_layers = 5
 -- Keep track of what Jokers each commenting_out instance disables
 -- Done in global instead of Joker self b/c game crashes if doing so
 G_TWMG.commenting_out_targets = {}
+
+-- == FUNCTION: standardized card layer names
+G_TWMG.layer_name = function(type, id)
+    return "tiwmig_" .. type .. "_layer_" .. tostring(id)
+end
 
 -- == FUNCTION: Localized Joker name shorthand
 G_TWMG.get_j_name = function(joker_key)
