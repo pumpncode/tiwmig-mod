@@ -19,7 +19,7 @@ local max_layers = G_TWMG.max_card_layers
 
 -- Make sprite layers all wibbly wobbly
 SMODS.DrawStep({
-    key = "main_layers",
+    key = "tiwmig_main_layers",
     order = 59,
     func = function(self)
         if (
@@ -66,7 +66,7 @@ SMODS.DrawStep({
 })
 
 SMODS.DrawStep({
-    key = "soul_layers",
+    key = "tiwmig_soul_layers",
     order = 61,
     func = function(self)
         if (
