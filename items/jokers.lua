@@ -944,7 +944,6 @@ SMODS.Joker { key = "commenting_out",
         end
     end end
 }
-
 --[[ 
 -- == JOKER: Prototype, j_tiwmig_prototype
 SMODS.Joker { key = "prototype",
@@ -957,13 +956,10 @@ SMODS.Joker { key = "prototype",
         return {vars = {}}
     end,
 
-    atlas = "Character atlas",
-    pos={x=0,y=0,layers={
-        {x=1,y=0}
-    }},
-    soul_pos = {x=2,y=0},
+    atlas = "Joker atlas",
+    pos={x=1,y=3},
 
-    rarity = 2,
+    rarity = 3,
     cost = 4,
     unlocked = true,
     discovered = true,
@@ -984,6 +980,7 @@ SMODS.Joker { key = "prototype",
         end
     end,
 }
+
 -- == JOKER: Product, j_tiwmig_product
 SMODS.Joker { key = "product",
     config = {
