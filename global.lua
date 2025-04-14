@@ -1,8 +1,6 @@
 -- == VARIABLES
 G_TWMG.max_card_layers = 5
--- Keep track of what Jokers each commenting_out instance disables
--- Done in global instead of Joker self b/c game crashes if doing so
-G_TWMG.commenting_out_targets = {}
+-- For the infinite Joker iterator
 G_TWMG.inf_j_iter = {
     index = 0,
     group_size = 5
