@@ -880,69 +880,8 @@ SMODS.Joker { key = "commenting_out",
     blueprint_compat = false,
     eternal_compat = true,
     perishable_compat = true,
-
-    uid = function(card)
-        return 'tiwmig_commenting_out_' .. tostring(card.ID)
-    end,
-
-    -- NOTE: the ID attached to card debuffing is of the form [['tiwmig_commenting_out_' .. tostring(card.ID)]]
-    add_to_deck = function(self, card, from_debuff)
-        if not from_debuff then
-            card.ability.extra.disabled_joker = nil
-            local my_pos = nil
-            for i = 1, #G.jokers.cards do
-                if G.jokers.cards[i] == card then
-                    my_pos = i
-                    break
-                end
-            end
-            if my_pos and G.jokers.cards[my_pos+1] then
-                SMODS.debuff_card(G.jokers.cards[my_pos+1], true, 'tiwmig_commenting_out_' .. tostring(card.ID))
-                G_TWMG.commenting_out_targets[self.uid(card)] = G.jokers.cards[my_pos+1]
-                card.ability.extra.pos = my_pos
-            end
-        end
-    end,
-
-    remove_from_deck = function(self, card, from_debuff)
-        if G_TWMG.commenting_out_targets[self.uid(card)] then
-            SMODS.debuff_card(G_TWMG.commenting_out_targets[self.uid(card)], false, 'tiwmig_commenting_out_' .. tostring(card.ID))
-            G_TWMG.commenting_out_targets[self.uid(card)] = nil
-        end
-    end,
-
-    update = function(self, card, dt) if G.jokers then
-        local prev_pos = card.ability.extra.pos
-        local prev_disabled_joker = G_TWMG.commenting_out_targets[self.uid(card)]
-
-        local my_pos = nil
-        for i = 1, #G.jokers.cards do
-            if G.jokers.cards[i] == card then
-                my_pos = i
-                break
-            end
-        end
-
-        -- the or conditional should prevent repeatedly running all of this
-        if my_pos then
-            if G.jokers.cards[my_pos+1] and (my_pos ~= prev_pos or G.jokers.cards[my_pos+1] ~= prev_disabled_joker) and not card.debuff then
-                if prev_disabled_joker and G.jokers.cards[my_pos+1] ~= prev_disabled_joker then
-                    SMODS.debuff_card(G_TWMG.commenting_out_targets[self.uid(card)], false, 'tiwmig_commenting_out_' .. tostring(card.ID))
-                end
-
-                G_TWMG.commenting_out_targets[self.uid(card)] = G.jokers.cards[my_pos+1]
-                SMODS.debuff_card(G_TWMG.commenting_out_targets[self.uid(card)], true, 'tiwmig_commenting_out_' .. tostring(card.ID))
-
-                card.ability.extra.pos = my_pos
-
-            elseif not G.jokers.cards[my_pos+1] and prev_disabled_joker then
-                SMODS.debuff_card(prev_disabled_joker, false, 'tiwmig_commenting_out_' .. tostring(card.ID))
-                G_TWMG.commenting_out_targets[self.uid(card)] = nil
-
-                card.ability.extra.pos = my_pos
-            end
-        end
-    end end
+    
+    -- Main functionality is present in Event tiwmig_inf_j_iter_event
 }
 --[[ 
 -- == JOKER: Prototype, j_tiwmig_prototype
@@ -1086,3 +1025,51 @@ function Card:calculate_joker(context) -- THIS is what will be called by various
 
     return return_value
 end
+
+-- == EVENT: Iterate through all Jokers repeatedly
+
+local tiwmig_inf_j_iter_event
+tiwmig_inf_j_iter_event = Event {
+    blockable = false,
+    blocking = false,
+    pause_force = false,
+    no_delete = true,
+    trigger = "after",
+    delay = 0,
+    timer = "REAL",
+    func = function()
+        -- G.STATE == 2 is the main scoring sequence
+        if not (G and G.jokers and G.jokers.cards) or G.STATE == 2 then
+            G_TWMG.inf_j_iter.index = 0
+            tiwmig_inf_j_iter_event.start_timer = false
+            return
+        end
+
+        if #G.jokers.cards < 1 or (G_TWMG.inf_j_iter.index*G_TWMG.inf_j_iter.group_size + 1) > #G.jokers.cards then
+            G_TWMG.inf_j_iter.index = 0
+            tiwmig_inf_j_iter_event.start_timer = false
+            return
+        end
+
+        for offset = 1, G_TWMG.inf_j_iter.group_size do
+            local i = G_TWMG.inf_j_iter.index*G_TWMG.inf_j_iter.group_size + offset
+            if i > #G.jokers.cards then
+                G_TWMG.inf_j_iter.index = 0
+                tiwmig_inf_j_iter_event.start_timer = false
+                return
+            end
+
+            -- START OF ITERATION
+            if i > 1 and G.jokers.cards[i-1].label == "j_tiwmig_commenting_out" and not G.jokers.cards[i-1].debuff then
+                SMODS.debuff_card(G.jokers.cards[i], true, "tiwmig_commenting_out")
+            else
+                SMODS.debuff_card(G.jokers.cards[i], false, "tiwmig_commenting_out")
+            end
+            -- END OF ITERATION
+        end
+
+        G_TWMG.inf_j_iter.index = G_TWMG.inf_j_iter.index + 1
+        tiwmig_inf_j_iter_event.start_timer = false
+    end
+}
+G.E_MANAGER:add_event(tiwmig_inf_j_iter_event)
