@@ -900,7 +900,7 @@ SMODS.Joker { key = "prototype",
     display_size = { w = 71*1.4, h = 95*1.4 },
 
     rarity = 3,
-    cost = 4,
+    cost = 10,
     unlocked = true,
     discovered = true,
     
@@ -968,8 +968,8 @@ SMODS.Joker { key = "spy_phone",
     atlas = "Joker atlas",
     pos={x=2,y=3},
 
-    rarity = 2,
-    cost = 4,
+    rarity = 3,
+    cost = 16,
     unlocked = true,
     discovered = true,
     
