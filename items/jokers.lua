@@ -458,10 +458,6 @@ SMODS.Joker { key = "cheesy_gravy",
 
     calculate = function(self, card, context)
         if context.joker_main then
-            -- Taken from To Do List source
-            ease_dollars(card.ability.cash)
-            G.GAME.dollar_buffer = (G.GAME.dollar_buffer or 0) + card.ability.extra.cash
-            G.E_MANAGER:add_event(Event({func = (function() G.GAME.dollar_buffer = 0; return true end)}))
             return {
                 mult = card.ability.extra.mult,
                 dollars = card.ability.extra.cash,
@@ -833,7 +829,6 @@ SMODS.Joker { key = "shotgun",
 
 -- == JOKER: Large Boulder the Size of a Small Boulder, j_tiwmig_large_small_boulder
 SMODS.Joker { key = "large_small_boulder",
-    -- This Joker's effect is most evident in section 3 of lovely.toml
     config = {
         extra = {},
     },
@@ -854,14 +849,14 @@ SMODS.Joker { key = "large_small_boulder",
     blueprint_compat = false,
     eternal_compat = true,
     perishable_compat = true,
+
+    -- Main functionality is present in Card:calculate_joker interception
 }
 
 -- == JOKER: Commenting Out, j_tiwmig_commenting_out
 SMODS.Joker { key = "commenting_out",
     config = {
-        extra = {
-            pos = 0
-        },
+        extra = {},
     },
 
     loc_vars = function(self, info_queue, card)
@@ -880,87 +875,32 @@ SMODS.Joker { key = "commenting_out",
     blueprint_compat = false,
     eternal_compat = true,
     perishable_compat = true,
-
-    uid = function(card)
-        return 'tiwmig_commenting_out_' .. tostring(card.ID)
-    end,
-
-    -- NOTE: the ID attached to card debuffing is of the form [['tiwmig_commenting_out_' .. tostring(card.ID)]]
-    add_to_deck = function(self, card, from_debuff)
-        if not from_debuff then
-            card.ability.extra.disabled_joker = nil
-            local my_pos = nil
-            for i = 1, #G.jokers.cards do
-                if G.jokers.cards[i] == card then
-                    my_pos = i
-                    break
-                end
-            end
-            if my_pos and G.jokers.cards[my_pos+1] then
-                SMODS.debuff_card(G.jokers.cards[my_pos+1], true, 'tiwmig_commenting_out_' .. tostring(card.ID))
-                G_TWMG.commenting_out_targets[self.uid(card)] = G.jokers.cards[my_pos+1]
-                card.ability.extra.pos = my_pos
-            end
-        end
-    end,
-
-    remove_from_deck = function(self, card, from_debuff)
-        if G_TWMG.commenting_out_targets[self.uid(card)] then
-            SMODS.debuff_card(G_TWMG.commenting_out_targets[self.uid(card)], false, 'tiwmig_commenting_out_' .. tostring(card.ID))
-            G_TWMG.commenting_out_targets[self.uid(card)] = nil
-        end
-    end,
-
-    update = function(self, card, dt) if G.jokers then
-        local prev_pos = card.ability.extra.pos
-        local prev_disabled_joker = G_TWMG.commenting_out_targets[self.uid(card)]
-
-        local my_pos = nil
-        for i = 1, #G.jokers.cards do
-            if G.jokers.cards[i] == card then
-                my_pos = i
-                break
-            end
-        end
-
-        -- the or conditional should prevent repeatedly running all of this
-        if my_pos then
-            if G.jokers.cards[my_pos+1] and (my_pos ~= prev_pos or G.jokers.cards[my_pos+1] ~= prev_disabled_joker) and not card.debuff then
-                if prev_disabled_joker and G.jokers.cards[my_pos+1] ~= prev_disabled_joker then
-                    SMODS.debuff_card(G_TWMG.commenting_out_targets[self.uid(card)], false, 'tiwmig_commenting_out_' .. tostring(card.ID))
-                end
-
-                G_TWMG.commenting_out_targets[self.uid(card)] = G.jokers.cards[my_pos+1]
-                SMODS.debuff_card(G_TWMG.commenting_out_targets[self.uid(card)], true, 'tiwmig_commenting_out_' .. tostring(card.ID))
-
-                card.ability.extra.pos = my_pos
-
-            elseif not G.jokers.cards[my_pos+1] and prev_disabled_joker then
-                SMODS.debuff_card(prev_disabled_joker, false, 'tiwmig_commenting_out_' .. tostring(card.ID))
-                G_TWMG.commenting_out_targets[self.uid(card)] = nil
-
-                card.ability.extra.pos = my_pos
-            end
-        end
-    end end
+    
+    -- Main functionality is present in Event tiwmig_inf_j_iter_event
 }
---[[ 
+
 -- == JOKER: Prototype, j_tiwmig_prototype
 SMODS.Joker { key = "prototype",
     config = {
-        extra = {},
+        extra = {
+            odds = 10
+        },
     },
 
     loc_vars = function(self, info_queue, card)
-        -- "Retriggers the rightmost Joker; distinct from copying a Joker"
-        return {vars = {}}
+        -- "Retriggers the rightmost Joker; 1 in 10 chance this card finalizes its design"
+        return {vars = {
+            G.GAME and G.GAME.probabilities.normal or 1,
+            card.ability.extra.odds
+        }}
     end,
 
     atlas = "Joker atlas",
-    pos={x=1,y=3},
+    pos={x=3,y=3},
+    display_size = { w = 71*1.4, h = 95*1.4 },
 
     rarity = 3,
-    cost = 4,
+    cost = 10,
     unlocked = true,
     discovered = true,
     
@@ -968,35 +908,68 @@ SMODS.Joker { key = "prototype",
     eternal_compat = true,
     perishable_compat = true,
 
-    calculate = function(self, card, context)
-        if context.retrigger_joker_check and not context.retrigger_joker and context.other_card ~= self then
-            if context.other_card == G.jokers.cards[#G.jokers.cards] then
-                return {
-                    message = localize('k_again_ex'),
-                    repetitions = 1,
-                    card = card
-                }
+    calculate = function(self, card, context) if not context.retrigger_joker then
+        if context.retrigger_joker_check and context.other_card ~= card then
+            if G.jokers.cards[#G.jokers.cards] == context.other_card then return {
+                message = localize('k_again_ex'),
+                repetitions = 1,
+                card = card
+            } end
+
+        elseif context.end_of_round and context.cardarea == G.jokers then
+            if pseudoseed('prototype') < G.GAME.probabilities.normal/card.ability.extra.odds then
+                G.E_MANAGER:add_event(Event {
+                    trigger = 'after',
+                    delay = 1,
+                    func = function ()
+                        play_sound('tarot1')
+                        card.T.w = card.T.w/1.3
+                        card.T.h = card.T.h/1.3
+                        card:flip()
+                        card:juice_up(0.3, 0.3)
+                        play_sound('card1')
+
+                        return true
+                    end
+                })
+                G.E_MANAGER:add_event(Event {
+                    trigger = 'after',
+                    delay = 1.25,
+                    func = function ()
+                        card:set_ability(G.P_CENTERS["j_tiwmig_spy_phone"])
+                        card:flip()
+                        card:juice_up(0.3, 0.3)
+                        play_sound('tarot2')
+
+                        return true
+                    end
+                })
+            else return {message = localize('k_nope_ex')}
             end
         end
-    end,
+    end end,
 }
 
--- == JOKER: Product, j_tiwmig_product
-SMODS.Joker { key = "product",
+-- == JOKER: Product, j_tiwmig_spy_phone
+SMODS.Joker { key = "spy_phone",
     config = {
-        extra = {},
+        extra = {
+            side = "left"
+        },
     },
 
     loc_vars = function(self, info_queue, card)
-        -- "Retriggers the left Joker; distinct from copying a Joker"
-        return {vars = {}}
+        -- "Retriggers the left Joker, side switches every round"
+        return {vars = {
+            card.ability.extra.side
+        }}
     end,
 
-    atlas = "Placeholders",
-    pos = G_TWMG.placeholders.joker,
+    atlas = "Joker atlas",
+    pos={x=2,y=3},
 
-    rarity = 2,
-    cost = 4,
+    rarity = 3,
+    cost = 16,
     unlocked = true,
     discovered = true,
     
@@ -1006,20 +979,20 @@ SMODS.Joker { key = "product",
 
     calculate = function(self, card, context)
         if context.retrigger_joker_check and not context.retrigger_joker and context.other_card ~= self then
-            for i = 1, #G.jokers.cards do
-                if G.jokers.cards[i] == card and G.jokers.cards[i-1] and G.jokers.cards[i-1] == context.other_card then
-                    return {
-                        message = localize('k_again_ex'),
-                        repetitions = 1,
-                        card = card
-                    }
-                end
-            end
+            local offset = card.ability.extra.side == "left" and -1 or 1
+            if G.jokers.cards[card.rank + offset] == context.other_card then return {
+                message = localize('k_again_ex'),
+                repetitions = 1,
+                card = card
+            } end
+        elseif context.end_of_round and context.cardarea == G.jokers then
+            card.ability.extra.side = card.ability.extra.side == "left" and "right" or "left"
+            return {
+                message = localize('k_tiwmig_switch_side')
+            }
         end
     end,
 }
-
-]]--
 
 --[[ == JOKER: Ruler of Everything, j_tiwmig_ruler_of_everything
 SMODS.Joker { key = "ruler_of_everything",
