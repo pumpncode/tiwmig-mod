@@ -6,6 +6,19 @@ G_TWMG.inf_j_iter = {
     group_size = 5
 }
 
+-- All functions in this table must take i, the Joker index
+G_TWMG.inf_j_iter.funcs = {
+    tiwmig = function(i)
+        local joker_c = G.jokers.cards
+        
+        if i > 1 and joker_c[i-1].label == "j_tiwmig_commenting_out" and not joker_c[i-1].debuff then
+            SMODS.debuff_card(G.jokers.cards[i], true, "tiwmig_commenting_out")
+        else
+            SMODS.debuff_card(G.jokers.cards[i], false, "tiwmig_commenting_out")
+        end
+    end,
+}
+
 -- == FUNCTION: standardized card layer names
 G_TWMG.layer_name = function(type, id)
     return "tiwmig_" .. type .. "_layer_" .. tostring(id)

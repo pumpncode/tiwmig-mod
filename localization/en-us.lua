@@ -121,19 +121,16 @@ Joker = { -- START OF JOKERS
     j_tiwmig_prototype = {
         name = "Prototype",
         text = {
-            "Retriggers the",
-            "rightmost {C:attention}Joker{}",
-            "{C:inactive}(Distinct from",
-            "{C:inactive}copying a Joker)"
+            "Retriggers the rightmost {C:attention}Joker{}",
+            "{C:green}#1# in #2#{} chance this card",
+            "finalizes its design",
         }
     },
-    j_tiwmig_product = {
-        name = "Product",
+    j_tiwmig_spy_phone = {
+        name = "Spy Phone",
         text = {
-            "Retriggers the",
-            "left {C:attention}Joker{}",
-            "{C:inactive}(Distinct from",
-            "{C:inactive}copying a Joker)"
+            "Retriggers the {C:attention}#1# Joker{}",
+            "Side switches at end of round",
         }
     }
 }, -- END OF JOKERS
@@ -146,7 +143,8 @@ misc = {
 dictionary = {
     k_tiwmig_poutine_eating = "Eating...",
     k_tiwmig_poutine_eaten = "Eaten!",
-    k_tiwmig_shotgun_blank = "Blank..."
+    k_tiwmig_shotgun_blank = "Blank...",
+    k_tiwmig_switch_side = "Side switch!"
 },
 
 v_dictionary = {

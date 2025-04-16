@@ -26,6 +26,7 @@ directory_2x = os.path.join(directory_assets, "2x")
 for file in os.listdir(directory_1x):
     # Get file name and paths
     filename = os.fsdecode(file)
+    if filename.split(".")[-1] != "png": continue
     input_image_path = os.path.join(directory_1x, filename)
     input_image = Image.open(input_image_path)
     upscale_pixel_art(input_image, directory_2x, input_image_path)
