@@ -121,7 +121,8 @@ Joker = { -- START OF JOKERS
     j_tiwmig_prototype = {
         name = "Prototype",
         text = {
-            "Retriggers the rightmost {C:attention}Joker{}",
+            "During scoring, retriggers",
+            "the rightmost {C:attention}Joker{}",
             "{C:green}#1# in #2#{} chance this card",
             "finalizes its design",
         }
@@ -129,7 +130,8 @@ Joker = { -- START OF JOKERS
     j_tiwmig_spy_phone = {
         name = "Spy Phone",
         text = {
-            "Retriggers the {C:attention}#1# Joker{}",
+            "During scoring, retriggers",
+            "the {C:attention}#1# Joker{}",
             "Side switches at end of round",
         }
     }
