@@ -23,11 +23,12 @@ G_TWMG.infinite_joker_iterator = {
 ---@param func function
 ---@return nil
 F_TWMG.add_simple_event = function(trigger, delay, func)
-	-- This is here in Oblivion.lua so it's loaded before everything, which uses this function
+	-- This is here in the main mod file so it's loaded before everything,
+	-- because everything uses this function
 	G.E_MANAGER:add_event(Event {
 		trigger = trigger,
-		delay = delay,
-		func = function() func(); return true end
+		delay   = delay,
+		func    = function() func(); return true end
 	})
 end
 
@@ -38,14 +39,17 @@ end
 function F_TWMG.load_directory(folder_name, condition_function)
 	local mod_path = G_TWMG.mod_path
 	local files = NFS.getDirectoryItems(mod_path .. folder_name)
+	local console_label = "TIWMIG"
 
 	for _,file_name in ipairs(files) do
 		local condition_is_met = true
 		if condition_function then condition_is_met = condition_function(file_name) end
 
 		if file_name:match(".lua$") and condition_is_met then
-			print("[TIWMIG] Loading file " .. file_name)
+			local console_line_format = ("[%s] Loading file %s")
 			local file_format = ("%s/%s")
+
+			print(console_line_format:format(console_label, file_name))
 			local file_func, err = SMODS.load_file(file_format:format(folder_name, file_name))
 			if err then error(err) end
 			if file_func then file_func() end
