@@ -114,3 +114,8 @@ function G.FUNCS.check_for_buy_space(card)
         return gf_checkbuyspace(card)
     end
 end
+
+local smods_recalcdebuff = SMODS.recalc_debuff
+function SMODS.recalc_debuff(card)
+    if G.GAME.blind then smods_recalcdebuff(card) end
+end
