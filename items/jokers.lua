@@ -1,19 +1,30 @@
--- == JOKER: Generic Brand Joker, j_tiwmig_generic_brand
+local simple_event = F_TWMG.add_simple_event
+
+----------------------
+-- Generic Brand Joker
+----------------------
 SMODS.Joker { key = "generic_brand",
-    config = { 
+    config = {
         extra = {
             discount = 0.30,
+            change = 0.10
         },
     },
 
     loc_vars = function(self, info_queue, card)
+        local key = nil
+        if card.ability.extra.discount < 0 then key = "j_tiwmig_generic_brand_gouged" end
         -- "All shop prices are #1#% off (rounded up)"
-        return {vars = {
-            card.ability.extra.discount*100 -- #1#
-        }}
+        return {
+            key = key,
+            vars = {
+                card.ability.extra.discount*100,
+                card.ability.extra.change*100
+            }
+        }
     end,
 
-    atlas = "Joker atlas",
+    atlas = "jokers",
     pos = {x=0, y=0},
 
     rarity = 2,
@@ -24,59 +35,30 @@ SMODS.Joker { key = "generic_brand",
     blueprint_compat = true,
     eternal_compat = true,
     perishable_compat = true,
-    
-    -- This is what sets the cost; setting as separate function to reduce amount copypasted
-    ability_function = function(self)
-        -- Go through each Generic Brand and add successive discounts
-        local function discount_group(group)
-            if group and group.cards then for k,v in pairs(group.cards) do
-                -- Reset cost to normal value (including discount vouchers) to start proper discounting
-                v:set_cost()
-                local calc_cost = v.cost
-
-                -- THEN apply discounts
-                local generics = SMODS.find_card("j_tiwmig_generic_brand")
-                for __,generic in pairs(generics) do
-                    calc_cost = calc_cost*(1-generic.ability.extra.discount)
-                end
-
-                -- Finally do floor
-                v.cost = math.ceil(calc_cost)
-            end end
-        end
-        -- With the above function we can just call it repeatedly for each group with minimal copypasting
-        -- Event so that it only triggers right after the Joker is added
-        G.E_MANAGER:add_event(Event({
-            func = function()
-                discount_group(G.shop_jokers)
-                discount_group(G.shop_booster)
-                discount_group(G.shop_vouchers)
-                return true
-            end
-        }))
-    end,
 
     add_to_deck = function(self, card, from_debuff)
-        -- Must refer off of "self", the card's Platonic ideal, to use the function
-        self.ability_function(self) -- See? Less copypasting for the same effect -every time-
+        F_TWMG.set_generic_discount()
     end,
 
     remove_from_deck = function(self, card, from_debuff)
-        self.ability_function(self)
+        F_TWMG.set_generic_discount()
     end,
 
     calculate = function(self, card, context)
-        if (
-            context.reroll_shop or
-            context.starting_shop or
-            (context.buying_card and context.card.ability.set == "Voucher") -- Discount vouchers
-        ) then
-            self.ability_function(self)
+        if context.beat_boss and context.cardarea == G.jokers then
+            card.ability.extra.discount = card.ability.extra.discount - card.ability.extra.change
+            simple_event(nil, nil, function ()
+                card:juice_up()
+                play_sound('generic1', 1, 0.75)
+            end)
         end
     end
+    -- Additional functionality in calc_on_mod
 }
 
--- == JOKER: Bag of Chips, j_tiwmig_bag_of_chips
+---------------
+-- Bag of Chips
+---------------
 SMODS.Joker { key = "bag_of_chips",
     config = {
         extra = {
@@ -85,14 +67,14 @@ SMODS.Joker { key = "bag_of_chips",
     },
 
 
-    atlas = "Joker atlas",
+    atlas = "jokers",
     pos = {x=1, y=0},
 
     rarity = 2,
     cost = 5,
     unlocked = true,
     discovered = true,
-    
+
     blueprint_compat = true,
     eternal_compat = false,
     perishable_compat = true,
@@ -102,6 +84,7 @@ SMODS.Joker { key = "bag_of_chips",
         if context.selling_self and G.STATE == 1 then
             play_sound('highlight2', 1 + math.random()*0.1, 0.7)
             card:juice_up()
+            -- This is needed because ease_chips is always instant >:/
             G.E_MANAGER:add_event(Event({
                 trigger = "ease",
                 delay = 1,
@@ -125,7 +108,28 @@ SMODS.Joker { key = "bag_of_chips",
     end,
 }
 
--- == JOKER: French Fries, j_tiwmig_french_fries
+-- Supplementary function:
+
+-- A shorthand for poutine components counting down or getting eaten.
+---@param card Card
+---@param colour table
+---@return table
+local function poutine_component_countdown(card, colour)
+    local eaten = card.ability.extra.countdown - 1 <= 0
+    if eaten then
+        F_TWMG.food_eat(card) -- Function to apply eaten effect (includes self-deletion)
+    else
+        card.ability.extra.countdown = card.ability.extra.countdown - 1
+    end
+    return {
+        message = localize(eaten and 'k_tiwmig_poutine_eaten' or 'k_tiwmig_poutine_eating'),
+        colour = colour
+    }
+end
+
+---------------
+-- French Fries
+---------------
 SMODS.Joker { key = "french_fries",
     config = {
         extra = {
@@ -137,42 +141,39 @@ SMODS.Joker { key = "french_fries",
     loc_vars = function(self, info_queue, card)
         -- "+#1# Chips for the next #2# hands; combines with #3# or #4#"
         return {vars = {
-            card.ability.extra.chips,     -- #1#
-            card.ability.extra.countdown, -- #2#
-            G_TWMG.get_j_name("j_tiwmig_gravy"),        -- #3#
-            G_TWMG.get_j_name("j_tiwmig_cheese_curds"), -- #4#
+            card.ability.extra.chips,
+            card.ability.extra.countdown,
+            localize { type = 'name_text', key = 'j_tiwmig_gravy', set = 'Joker' },
+            localize { type = 'name_text', key = 'j_tiwmig_cheese_curds', set = 'Joker' },
         }}
     end,
 
-    atlas = "Joker atlas",
+    atlas = "jokers",
     pos = {x=0, y=1},
 
     rarity = 1,
     cost = 4,
     unlocked = true,
     discovered = true,
-    
+
     blueprint_compat = true,
     eternal_compat = false,
     perishable_compat = false,
 
     in_pool = function(self, args)
-        return not (
-            #SMODS.find_card("j_tiwmig_french_fries") > 0 or
-            #SMODS.find_card("j_tiwmig_frite_sauce") > 0 or 
-            #SMODS.find_card("j_tiwmig_chips_n_cheese") > 0 or
-            #SMODS.find_card("j_tiwmig_poutine") > 0
-        )
+        return not F_TWMG.has_cards({
+            "j_tiwmig_french_fries",
+            "j_tiwmig_frite_sauce",
+            "j_tiwmig_chips_n_cheese"
+        }, true)
     end,
 
 
-    add_to_deck = function(self, card, from_debuff)
-        G_TWMG.define_poutine_fusions(card, {
-            {"j_tiwmig_gravy", "j_tiwmig_frite_sauce"},
-            {"j_tiwmig_cheese_curds", "j_tiwmig_chips_n_cheese"},
-            {"j_tiwmig_cheesy_gravy", "j_tiwmig_poutine"}
-        })
-    end,
+    poutine_fusion = {
+        {"j_tiwmig_gravy", "j_tiwmig_frite_sauce"},
+        {"j_tiwmig_cheese_curds", "j_tiwmig_chips_n_cheese"},
+        {"j_tiwmig_cheesy_gravy", "j_tiwmig_poutine"}
+    },
 
     calculate = function(self, card, context)
         if context.joker_main then
@@ -182,24 +183,14 @@ SMODS.Joker { key = "french_fries",
         end
 
         if context.after then
-            if card.ability.extra.countdown - 1 <= 0 then
-                G_TWMG.food_eat(card) -- Function to apply eaten effect (includes self-deletion)
-                return {
-                    message = localize('k_tiwmig_poutine_eaten'),
-                    colour = G.C.CHIPS
-                }
-            else
-                card.ability.extra.countdown = card.ability.extra.countdown - 1
-                return {
-                    message = localize('k_tiwmig_poutine_eating'),
-                    colour = G.C.CHIPS
-                }
-            end
+            return poutine_component_countdown(card, G.C.CHIPS)
         end
     end,
 }
 
--- == JOKER: Gravy, j_tiwmig_gravy
+--------
+-- Gravy
+--------
 SMODS.Joker { key = "gravy",
     config = {
         extra = {
@@ -211,41 +202,38 @@ SMODS.Joker { key = "gravy",
     loc_vars = function(self, info_queue, card)
         -- "+#1# Mult for the next #2# hands; combines with #3# or #4#"
         return {vars = {
-            card.ability.extra.mult,      -- #1#
-            card.ability.extra.countdown, -- #2#
-            G_TWMG.get_j_name("j_tiwmig_cheese_curds"), -- #3#
-            G_TWMG.get_j_name("j_tiwmig_french_fries"), -- #4#
+            card.ability.extra.mult,
+            card.ability.extra.countdown,
+            localize { type = 'name_text', key = 'j_tiwmig_cheese_curds', set = 'Joker' },
+            localize { type = 'name_text', key = 'j_tiwmig_french_fries', set = 'Joker' },
         }}
     end,
 
-    atlas = "Joker atlas",
+    atlas = "jokers",
     pos = {x=1, y=1},
 
     rarity = 1,
     cost = 4,
     unlocked = true,
     discovered = true,
-    
+
     blueprint_compat = true,
     eternal_compat = false,
     perishable_compat = false,
 
     in_pool = function(self, args)
-        return not (
-            #SMODS.find_card("j_tiwmig_gravy") > 0 or
-            #SMODS.find_card("j_tiwmig_cheesy_gravy") > 0 or 
-            #SMODS.find_card("j_tiwmig_frite_sauce") > 0 or
-            #SMODS.find_card("j_tiwmig_poutine") > 0
-        )
+        return not F_TWMG.has_cards({
+            "j_tiwmig_gravy",
+            "j_tiwmig_cheesy_gravy",
+            "j_tiwmig_frite_sauce"
+        }, true)
     end,
 
-    add_to_deck = function(self, card, from_debuff)
-        G_TWMG.define_poutine_fusions(card, {
-            {"j_tiwmig_cheese_curds", "j_tiwmig_cheesy_gravy"},
-            {"j_tiwmig_french_fries", "j_tiwmig_frite_sauce"},
-            {"j_tiwmig_chips_n_cheese", "j_tiwmig_poutine"}
-        })
-    end,
+    poutine_fusion = {
+        {"j_tiwmig_cheese_curds", "j_tiwmig_cheesy_gravy"},
+        {"j_tiwmig_french_fries", "j_tiwmig_frite_sauce"},
+        {"j_tiwmig_chips_n_cheese", "j_tiwmig_poutine"}
+    },
 
     calculate = function(self, card, context)
         if context.joker_main then
@@ -255,24 +243,14 @@ SMODS.Joker { key = "gravy",
         end
 
         if context.after then
-            if card.ability.extra.countdown - 1 <= 0 then
-                G_TWMG.food_eat(card) -- Function to apply eaten effect (includes self-deletion)
-                return {
-                    message = localize('k_tiwmig_poutine_eaten'),
-                    colour = G.C.MULT
-                }
-            else
-                card.ability.extra.countdown = card.ability.extra.countdown - 1
-                return {
-                    message = localize('k_tiwmig_poutine_eating'),
-                    colour = G.C.MULT
-                }
-            end
+            return poutine_component_countdown(card, G.C.MULT)
         end
     end,
 }
 
--- == JOKER: Cheese Curds, j_tiwmig_cheese_curds
+---------------
+-- Cheese Curds
+---------------
 SMODS.Joker { key = "cheese_curds",
     config = {
         extra = {
@@ -284,41 +262,38 @@ SMODS.Joker { key = "cheese_curds",
     loc_vars = function(self, info_queue, card)
         -- "+$#1# for the next #2# hands; combines with #3# or #4#"
         return {vars = {
-            card.ability.extra.cash,      -- #1#
-            card.ability.extra.countdown, -- #2#
-            G_TWMG.get_j_name("j_tiwmig_french_fries"), -- #3#
-            G_TWMG.get_j_name("j_tiwmig_gravy"),        -- #4#
+            card.ability.extra.cash,
+            card.ability.extra.countdown,
+            localize { type = 'name_text', key = 'j_tiwmig_french_fries', set = 'Joker' },
+            localize { type = 'name_text', key = 'j_tiwmig_gravy', set = 'Joker' },
         }}
     end,
 
-    atlas = "Joker atlas",
+    atlas = "jokers",
     pos = {x=2, y=1},
 
     rarity = 1,
     cost = 4,
     unlocked = true,
     discovered = true,
-    
+
     blueprint_compat = true,
     eternal_compat = false,
     perishable_compat = false,
 
     in_pool = function(self, args)
-        return not (
-            #SMODS.find_card("j_tiwmig_cheese_curds") > 0 or
-            #SMODS.find_card("j_tiwmig_chips_n_cheese") > 0 or 
-            #SMODS.find_card("j_tiwmig_cheesy_gravy") > 0 or
-            #SMODS.find_card("j_tiwmig_poutine") > 0
-        )
+        return not F_TWMG.has_cards({
+            "j_tiwmig_cheese_curds",
+            "j_tiwmig_chips_n_cheese",
+            "j_tiwmig_cheesy_gravy"
+        }, true)
     end,
 
-    add_to_deck = function(self, card, from_debuff)
-        G_TWMG.define_poutine_fusions(card, {
-            {"j_tiwmig_french_fries", "j_tiwmig_chips_n_cheese"},
-            {"j_tiwmig_gravy", "j_tiwmig_cheesy_gravy"},
-            {"j_tiwmig_frite_sauce", "j_tiwmig_poutine"}
-        })
-    end,
+    poutine_fusion = {
+        {"j_tiwmig_french_fries", "j_tiwmig_chips_n_cheese"},
+        {"j_tiwmig_gravy", "j_tiwmig_cheesy_gravy"},
+        {"j_tiwmig_frite_sauce", "j_tiwmig_poutine"}
+    },
 
     calculate = function(self, card, context)
         if context.joker_main then
@@ -329,24 +304,14 @@ SMODS.Joker { key = "cheese_curds",
         end
 
         if context.after then
-            if card.ability.extra.countdown - 1 <= 0 then
-                G_TWMG.food_eat(card) -- Function to apply eaten effect (includes self-deletion)
-                return {
-                    message = localize('k_tiwmig_poutine_eaten'),
-                    colour = G.C.MONEY
-                }
-            else
-                card.ability.extra.countdown = card.ability.extra.countdown - 1
-                return {
-                    message = localize('k_tiwmig_poutine_eating'),
-                    colour = G.C.MONEY
-                }
-            end
+            return poutine_component_countdown(card, G.C.MONEY)
         end
     end,
 }
 
--- == JOKER: Frite Sauce, j_tiwmig_frite_sauce
+--------------
+-- Frite Sauce
+--------------
 SMODS.Joker { key = "frite_sauce",
     config = {
         extra = {
@@ -359,21 +324,21 @@ SMODS.Joker { key = "frite_sauce",
     loc_vars = function(self, info_queue, card)
         -- "+#1# Chips and +#2# Mult for the next #3# hands; combines with #4#"
         return {vars = {
-            card.ability.extra.chips,     -- #1#
-            card.ability.extra.mult,      -- #2#
-            card.ability.extra.countdown, -- #3#
-            G_TWMG.get_j_name("j_tiwmig_cheese_curds"), -- #4#
+            card.ability.extra.chips,
+            card.ability.extra.mult,
+            card.ability.extra.countdown,
+            localize { type = 'name_text', key = 'j_tiwmig_cheese_curds', set = 'Joker' },
         }}
     end,
 
-    atlas = "Joker atlas",
+    atlas = "jokers",
     pos = {x=0, y=2},
 
     rarity = 2,
     cost = 4,
     unlocked = true,
     discovered = true,
-    
+
     blueprint_compat = true,
     eternal_compat = false,
     perishable_compat = false,
@@ -382,11 +347,9 @@ SMODS.Joker { key = "frite_sauce",
         return false
     end,
 
-    add_to_deck = function(self, card, from_debuff)
-        G_TWMG.define_poutine_fusions(card, {
-            {"j_tiwmig_cheese_curds", "j_tiwmig_poutine"}
-        })
-    end,
+    poutine_fusion = {
+        {"j_tiwmig_cheese_curds", "j_tiwmig_poutine"}
+    },
 
     calculate = function(self, card, context)
         if context.joker_main then
@@ -397,24 +360,14 @@ SMODS.Joker { key = "frite_sauce",
         end
 
         if context.after then
-            if card.ability.extra.countdown - 1 <= 0 then
-                G_TWMG.food_eat(card) -- Function to apply eaten effect (includes self-deletion)
-                return {
-                    message = localize('k_tiwmig_poutine_eaten'),
-                    colour = G.C.CHIPS
-                }
-            else
-                card.ability.extra.countdown = card.ability.extra.countdown - 1
-                return {
-                    message = localize('k_tiwmig_poutine_eating'),
-                    colour = G.C.CHIPS
-                }
-            end
+            return poutine_component_countdown(card, G.C.CHIPS)
         end
     end,
 }
 
--- == JOKER: Cheesy Gravy, j_tiwmig_cheesy_gravy
+---------------
+-- Cheesy Gravy
+---------------
 SMODS.Joker { key = "cheesy_gravy",
     config = {
         extra = {
@@ -427,21 +380,21 @@ SMODS.Joker { key = "cheesy_gravy",
     loc_vars = function(self, info_queue, card)
         -- "+#1# Mult and earn $#2# for the next #3# hands; combines with #4#"
         return {vars = {
-            card.ability.extra.mult,     -- #1#
-            card.ability.extra.cash,     -- #2#
-            card.ability.extra.countdown, -- #3#
-            G_TWMG.get_j_name("j_tiwmig_french_fries"), -- #4#
+            card.ability.extra.mult,
+            card.ability.extra.cash,
+            card.ability.extra.countdown,
+            localize { type = 'name_text', key = 'j_tiwmig_french_fries', set = 'Joker' },
         }}
     end,
 
-    atlas = "Joker atlas",
+    atlas = "jokers",
     pos = {x=1, y=2},
 
     rarity = 2,
     cost = 4,
     unlocked = true,
     discovered = true,
-    
+
     blueprint_compat = true,
     eternal_compat = false,
     perishable_compat = false,
@@ -450,11 +403,9 @@ SMODS.Joker { key = "cheesy_gravy",
         return false
     end,
 
-    add_to_deck = function(self, card, from_debuff)
-        G_TWMG.define_poutine_fusions(card, {
-            {"j_tiwmig_french_fries", "j_tiwmig_poutine"}
-        })
-    end,
+    poutine_fusion = {
+        {"j_tiwmig_french_fries", "j_tiwmig_poutine"}
+    },
 
     calculate = function(self, card, context)
         if context.joker_main then
@@ -465,24 +416,14 @@ SMODS.Joker { key = "cheesy_gravy",
         end
 
         if context.after then
-            if card.ability.extra.countdown - 1 <= 0 then
-                G_TWMG.food_eat(card) -- Function to apply eaten effect (includes self-deletion)
-                return {
-                    message = localize('k_tiwmig_poutine_eaten'),
-                    colour = G.C.MULT
-                }
-            else
-                card.ability.extra.countdown = card.ability.extra.countdown - 1
-                return {
-                    message = localize('k_tiwmig_poutine_eating'),
-                    colour = G.C.MULT
-                }
-            end
+            return poutine_component_countdown(card, G.C.MULT)
         end
     end,
 }
 
--- == JOKER: Chips n' Cheese, j_tiwmig_chips_n_cheese
+------------------
+-- Chips n' Cheese
+------------------
 SMODS.Joker { key = "chips_n_cheese",
     config = {
         extra = {
@@ -495,21 +436,21 @@ SMODS.Joker { key = "chips_n_cheese",
     loc_vars = function(self, info_queue, card)
         -- "Earn $#1# and +#2# Chips for the next #3# hands; combines with #4#"
         return {vars = {
-            card.ability.extra.cash,      -- #1#
-            card.ability.extra.chips,     -- #2#
-            card.ability.extra.countdown, -- #3#
-            G_TWMG.get_j_name("j_tiwmig_gravy"), -- #4#
+            card.ability.extra.cash,
+            card.ability.extra.chips,
+            card.ability.extra.countdown,
+            localize { type = 'name_text', key = 'j_tiwmig_gravy', set = 'Joker' },
         }}
     end,
 
-    atlas = "Joker atlas",
+    atlas = "jokers",
     pos = {x=2, y=2},
 
     rarity = 2,
     cost = 4,
     unlocked = true,
     discovered = true,
-    
+
     blueprint_compat = true,
     eternal_compat = false,
     perishable_compat = false,
@@ -518,11 +459,9 @@ SMODS.Joker { key = "chips_n_cheese",
         return false
     end,
 
-    add_to_deck = function(self, card, from_debuff)
-        G_TWMG.define_poutine_fusions(card, {
-            {"j_tiwmig_gravy", "j_tiwmig_poutine"}
-        })
-    end,
+    poutine_fusion = {
+        {"j_tiwmig_gravy", "j_tiwmig_poutine"}
+    },
 
     calculate = function(self, card, context)
         if context.joker_main then
@@ -534,24 +473,14 @@ SMODS.Joker { key = "chips_n_cheese",
         end
 
         if context.after then
-            if card.ability.extra.countdown - 1 <= 0 then
-                G_TWMG.food_eat(card) -- Function to apply eaten effect (includes self-deletion)
-                return {
-                    message = localize('k_tiwmig_poutine_eaten'),
-                    colour = G.C.MONEY
-                }
-            else
-                card.ability.extra.countdown = card.ability.extra.countdown - 1
-                return {
-                    message = localize('k_tiwmig_poutine_eating'),
-                    colour = G.C.MONEY
-                }
-            end
+            return poutine_component_countdown(card, G.C.MONEY)
         end
     end,
 }
 
--- == JOKER: Poutine, j_tiwmig_poutine
+----------
+-- Poutine
+----------
 SMODS.Joker { key = "poutine",
     config = {
         extra = {
@@ -565,21 +494,21 @@ SMODS.Joker { key = "poutine",
     loc_vars = function(self, info_queue, card)
         -- "+#1# Chips, +#2# Mult, and earn $#3# for the next #4# hands"
         return {vars = {
-            card.ability.extra.chips,     -- #1#
-            card.ability.extra.mult,      -- #2#
-            card.ability.extra.cash,      -- #3#
-            card.ability.extra.countdown, -- #4#
+            card.ability.extra.chips,
+            card.ability.extra.mult,
+            card.ability.extra.cash,
+            card.ability.extra.countdown,
         }}
     end,
 
-    atlas = "Joker atlas",
+    atlas = "jokers",
     pos = {x=2, y=0},
 
     rarity = 3,
     cost = 4,
     unlocked = true,
     discovered = true,
-    
+
     blueprint_compat = true,
     eternal_compat = false,
     perishable_compat = false,
@@ -599,24 +528,14 @@ SMODS.Joker { key = "poutine",
         end
 
         if context.after then
-            if card.ability.extra.countdown - 1 <= 0 then
-                G_TWMG.food_eat(card) -- Function to apply eaten effect (includes self-deletion)
-                return {
-                    message = localize('k_tiwmig_poutine_eaten'),
-                    colour = G.C.PURPLE
-                }
-            else
-                card.ability.extra.countdown = card.ability.extra.countdown - 1
-                return {
-                    message = localize('k_tiwmig_poutine_eating'),
-                    colour = G.C.PURPLE
-                }
-            end
+            return poutine_component_countdown(card, G.C.PURPLE)
         end
     end,
 }
 
--- == JOKER: "egg", j_tiwmig_egg
+--------
+-- "egg"
+--------
 SMODS.Joker { key = "egg",
     config = {
         extra = {
@@ -627,18 +546,18 @@ SMODS.Joker { key = "egg",
     loc_vars = function(self, info_queue, card)
         -- "+#1# Chips"
         return {vars = {
-            card.ability.extra.chips, -- #1#
+            card.ability.extra.chips,
         }}
     end,
 
-    atlas = "Joker atlas",
+    atlas = "jokers",
     pos = {x=3, y=0},
 
     rarity = 1,
     cost = 2,
     unlocked = true,
     discovered = true,
-    
+
     blueprint_compat = true,
     eternal_compat = true,
     perishable_compat = true,
@@ -648,7 +567,9 @@ SMODS.Joker { key = "egg",
     end,
 }
 
--- == JOKER: Shotgun, j_tiwmig_shotgun
+----------
+-- Shotgun
+----------
 SMODS.Joker { key = "shotgun",
     config = {
         extra = {
@@ -664,17 +585,21 @@ SMODS.Joker { key = "shotgun",
         -- "Shoot on play; only live shells give X#2# Mult;"
         -- "#3# live round#4#. #5# blanks."
         -- "#6# shells remain"
-        return {vars = {
-            card.ability.extra.maxshells, -- #1#
-            card.ability.extra.xmult,     -- #2#
-            card.ability.extra.initialshells.blank, -- #3#
-            card.ability.extra.initialshells.blank ~= 1 and "s" or "", -- #4#
-            card.ability.extra.initialshells.live, -- #5#
-            #card.ability.extra.chamber,  -- #6#
-        }}
+        local key = nil
+        if card.ability.extra.initialshells.blank ~= 1 then key = "j_tiwmig_shotgun_singular" end
+        return {
+            key = key,
+            vars = {
+                card.ability.extra.maxshells,
+                card.ability.extra.xmult,
+                card.ability.extra.initialshells.blank,
+                card.ability.extra.initialshells.live,
+                #card.ability.extra.chamber,
+            }
+        }
     end,
 
-    atlas = "Joker atlas",
+    atlas = "jokers",
     pos = {x=3,y=1},
     display_size = { w = 71*1.3, h = 95*1.3 },
 
@@ -682,7 +607,7 @@ SMODS.Joker { key = "shotgun",
     cost = 8,
     unlocked = true,
     discovered = true,
-    
+
     blueprint_compat = true,
     eternal_compat = true,
     perishable_compat = true,
@@ -691,46 +616,28 @@ SMODS.Joker { key = "shotgun",
         if context.setting_blind and #card.ability.extra.chamber < 1 then
             -- round(a) = floor(0.5 + a)
             -- number between 2 and shells = round(rng*(shells-2)) + 2
-            local total_shells = math.floor(0.5 + pseudoseed('shotgun')*(card.ability.extra.maxshells - 2)) + 2
+            local total_shells = math.floor(0.5 + pseudoseed('tiwmig_shotgun_shotgun')*(card.ability.extra.maxshells - 2)) + 2
             local shell_count = {
                 live = math.ceil(total_shells/2),
                 blank = math.floor(total_shells/2)
             }
 
-            --[[
-
-            -- The difference between blanks and lives can be up to 3
-            -- These conditionals just allow lives to increase
-            if shell_count.blank > 1 and pseudoseed('shotgun1') > 0.5 then
-                shell_count.live = shell_count.live + 1
-                shell_count.blank = shell_count.blank - 1
-            end
-            if shell_count.blank > 1 and pseudoseed('shotgun2') > 0.5 then
-                shell_count.live = shell_count.live + 1
-                shell_count.blank = shell_count.blank - 1
-            end
-
-            ]]
-
             -- For the messages
-            local shell_count_copy = {
-                live = shell_count.live,
-                blank = shell_count.blank
-            }
+            -- Debug note: shells go from 8, 7, 6... 3, 2, 1
+            -- print(card.ability.extra.chamber)
+            card.ability.extra.initialshells.live = shell_count.live
+            card.ability.extra.initialshells.blank = shell_count.blank
 
             while shell_count.live + shell_count.blank > 0 do
                 -- Note down which of live and blank is max, and which is min
-                local max_shell = math.max(
-                    shell_count.live,
-                    shell_count.blank
-                ) == shell_count.live and "live" or "blank"
+                local max_shell = shell_count.live >= shell_count.blank and "live" or "blank"
                 local min_shell = max_shell == "live" and "blank" or "live"
                 local shell = ""
 
                 -- Randomly pick between live and blank
                 -- We do it this way so that if one of the shells is empty,
                 -- we pick the shell that's not empty *always*
-                if pseudoseed('loading')*(shell_count.live + shell_count.blank) < shell_count[max_shell] then
+                if pseudoseed('tiwmig_shotgun_loading')*(shell_count.live + shell_count.blank) < shell_count[max_shell] then
                     shell = max_shell
                 else
                     shell = min_shell
@@ -741,78 +648,26 @@ SMODS.Joker { key = "shotgun",
                 card.ability.extra.chamber[#card.ability.extra.chamber+1] = shell == "live" and 1 or 0
             end
 
-            -- Debug note: shells go from 8, 7, 6... 3, 2, 1
-            -- print(card.ability.extra.chamber)
-            card.ability.extra.initialshells = shell_count_copy
-
-            --[[ How many live shells?
-            G.E_MANAGER:add_event(Event({
-                blockable = false,
-                func = function()
-                    attention_text({
-                        text = localize{type='variable',key='k_tiwmig_shotgun_load_live',vars={
-                            shell_count_copy.live,
-                            shell_count_copy.live > 1 and "s" or "" -- Add "s" for plural
-                        }},
-                        scale = 0.75, 
-                        hold = 1.5,
-                        backdrop_colour = G.C.RED,
-                        align = 'tm',
-                        major = card,
-                        offset = {x = 0, y = 0.33*G.CARD_H}
-                    })
-                    play_sound('generic1', 1, 0.75)
-                    return true
-                end
-            }))]]
-
-            --[[ How many blanks?
-            G.E_MANAGER:add_event(Event({
-                trigger = "after",
-                delay = 1.75,
-                blockable = false,
-                func = function() 
-                    attention_text({
-                        text = localize{type='variable',key='k_tiwmig_shotgun_load_blank',vars={
-                            shell_count_copy.blank,
-                            shell_count_copy.blank > 1 and "s" or "" -- Add "s" for plural
-                        }},
-                        scale = 0.75, 
-                        hold = 1.5,
-                        backdrop_colour = G.C.GREY,
-                        align = 'tm',
-                        major = card,
-                        offset = {x = 0, y = 0.66*G.CARD_H}
-                    })
-                    play_sound('generic1', 1, 0.75)
-                    return true
-                end
-            }))]]
-
             -- "Load" each bullet into the shotgun
             G.E_MANAGER:add_event(Event({
                 trigger = "after",
                 blockable = false,
                 func = function()
-                    for x = 1, total_shells do
-                        G.E_MANAGER:add_event(Event({
-                            delay = 0.35,
-                            trigger = "after",
-                            func = function()
-                                card:juice_up()
-                                play_sound('generic1', 1, 0.75)
-                                return true
-                            end
-                        }))
+                    for _ = 1, total_shells do
+                        simple_event('after', 0.35, function ()
+                            card:juice_up()
+                            play_sound('generic1', 1, 0.75)
+                        end)
                     end
                     return true
                 end
             }))
+
         elseif context.joker_main and #card.ability.extra.chamber > 0 then
             -- Going from max to 1 (backwards), stating here for debug's sake
             local shell = card.ability.extra.chamber[#card.ability.extra.chamber]
             card.ability.extra.chamber[#card.ability.extra.chamber] = nil
-            
+
             if shell == 1 then
                 return {
                     xmult = card.ability.extra.xmult
@@ -827,25 +682,18 @@ SMODS.Joker { key = "shotgun",
     end,
 }
 
--- == JOKER: Large Boulder the Size of a Small Boulder, j_tiwmig_large_small_boulder
+--------------------------------------------
+-- Large Boulder the Size of a Small Boulder
+--------------------------------------------
 SMODS.Joker { key = "large_small_boulder",
-    config = {
-        extra = {},
-    },
-
-    loc_vars = function(self, info_queue, card)
-        -- "All cards are considered one rank lower"
-        return {vars = {}}
-    end,
-
-    atlas = "Joker atlas",
+    atlas = "jokers",
     pos = {x=3,y=2},
 
     rarity = 3,
     cost = 6,
     unlocked = true,
     discovered = true,
-    
+
     blueprint_compat = false,
     eternal_compat = true,
     perishable_compat = true,
@@ -853,33 +701,28 @@ SMODS.Joker { key = "large_small_boulder",
     -- Main functionality is present in Card:calculate_joker interception
 }
 
--- == JOKER: Commenting Out, j_tiwmig_commenting_out
+-----------------
+-- Commenting Out
+-----------------
 SMODS.Joker { key = "commenting_out",
-    config = {
-        extra = {},
-    },
-
-    loc_vars = function(self, info_queue, card)
-        -- "Disables the Joker to the right"
-        return {vars = {}}
-    end,
-
-    atlas = "Joker atlas",
+    atlas = "jokers",
     pos = {x=0, y=3},
 
     rarity = 2,
     cost = 4,
     unlocked = true,
     discovered = true,
-    
+
     blueprint_compat = false,
     eternal_compat = true,
     perishable_compat = true,
-    
-    -- Main functionality is present in Event tiwmig_inf_j_iter_event
+
+    -- Main functionality is present in the infinite joker iterator
 }
 
--- == JOKER: Prototype, j_tiwmig_prototype
+------------
+-- Prototype
+------------
 SMODS.Joker { key = "prototype",
     config = {
         extra = {
@@ -888,14 +731,15 @@ SMODS.Joker { key = "prototype",
     },
 
     loc_vars = function(self, info_queue, card)
+        local numerator, denominator = SMODS.get_probability_vars(card, 1, card.ability.extra.odds, 'tiwmig_prototype')
         -- "Retriggers the rightmost Joker; 1 in 10 chance this card finalizes its design"
         return {vars = {
-            G.GAME and G.GAME.probabilities.normal or 1,
-            card.ability.extra.odds
+            numerator,
+            denominator
         }}
     end,
 
-    atlas = "Joker atlas",
+    atlas = "jokers",
     pos={x=3,y=3},
     display_size = { w = 71*1.4, h = 95*1.4 },
 
@@ -903,7 +747,7 @@ SMODS.Joker { key = "prototype",
     cost = 10,
     unlocked = true,
     discovered = true,
-    
+
     blueprint_compat = true,
     eternal_compat = true,
     perishable_compat = true,
@@ -917,40 +761,29 @@ SMODS.Joker { key = "prototype",
             } end
 
         elseif context.end_of_round and context.cardarea == G.jokers then
-            if pseudoseed('prototype') < G.GAME.probabilities.normal/card.ability.extra.odds then
-                G.E_MANAGER:add_event(Event {
-                    trigger = 'after',
-                    delay = 1,
-                    func = function ()
-                        play_sound('tarot1')
-                        card.T.w = card.T.w/1.3
-                        card.T.h = card.T.h/1.3
-                        card:flip()
-                        card:juice_up(0.3, 0.3)
-                        play_sound('card1')
-
-                        return true
-                    end
-                })
-                G.E_MANAGER:add_event(Event {
-                    trigger = 'after',
-                    delay = 1.25,
-                    func = function ()
-                        card:set_ability(G.P_CENTERS["j_tiwmig_spy_phone"])
-                        card:flip()
-                        card:juice_up(0.3, 0.3)
-                        play_sound('tarot2')
-
-                        return true
-                    end
-                })
+            if SMODS.pseudorandom_probability(card, 'tiwmig_prototype', 1, card.ability.extra.odds) then
+                simple_event('after', 1, function ()
+                    play_sound('tarot1')
+                    card.T.w = card.T.w/1.3
+                    card.T.h = card.T.h/1.3
+                    card:flip()
+                    card:juice_up(0.3, 0.3)
+                end)
+                simple_event('after', 1.25, function ()
+                    card:set_ability(G.P_CENTERS["j_tiwmig_spy_phone"])
+                    card:flip()
+                    card:juice_up(0.3, 0.3)
+                    play_sound('tarot2')
+                end)
             else return {message = localize('k_nope_ex')}
             end
         end
     end end,
 }
 
--- == JOKER: Product, j_tiwmig_spy_phone
+------------
+-- Spy Phone
+------------
 SMODS.Joker { key = "spy_phone",
     config = {
         extra = {
@@ -959,20 +792,28 @@ SMODS.Joker { key = "spy_phone",
     },
 
     loc_vars = function(self, info_queue, card)
+        local key = nil
+        if card.ability.extra.side == "right" then key = "j_tiwmig_spy_phone_right" end
         -- "Retriggers the left Joker, side switches every round"
-        return {vars = {
-            card.ability.extra.side
-        }}
+        return {
+            key = key,
+            vars = {
+                card.ability.extra.side
+            }
+        }
     end,
 
-    atlas = "Joker atlas",
+    atlas = "jokers",
     pos={x=2,y=3},
 
+    in_pool = function (self, args)
+        return false
+    end,
     rarity = 3,
     cost = 16,
     unlocked = true,
     discovered = true,
-    
+
     blueprint_compat = true,
     eternal_compat = true,
     perishable_compat = true,
@@ -1008,54 +849,16 @@ SMODS.Joker { key = "ruler_of_everything",
         }
     },
 
-    atlas = "Joker atlas",
+    atlas = "jokers",
     pos = {x=0, y=0},
 
     rarity = 2,
     cost = 5,
     unlocked = true,
     discovered = true,
-    
+
     blueprint_compat = true,
     eternal_compat = false,
     perishable_compat = true,
 }
 ]]--
-
--- == Card:calculate_joker value interception (many thanks to Airtoum for the idea and code for this)
-local calc_joker_func = Card.calculate_joker -- preserving previous iteration of calculate_joker
-
-function Card:calculate_joker(context) -- THIS is what will be called by various events instead
-    local return_value = calc_joker_func(self, context)
-
-    if not return_value then
-        -- Large-Small Boulder
-            -- Rank-based Jokers should only trigger once per card;
-            -- this conditional catches the lower-rank case, if the default-rank case does not result in anything
-        if (context.other_card and 
-            context.other_card.base and 
-            context.other_card.base.id and 
-            #SMODS.find_card("j_tiwmig_large_small_boulder") > 0
-        ) then
-            local oc = context.other_card
-            oc.base.id = oc.base.id == 2 and 14 or math.max(oc.base.id - 1, 2)
-            return_value = calc_joker_func(self, context)
-            oc.base.id = oc.base.id == 14 and 2 or math.min(oc.base.id + 1, 14)
-
-        elseif (context.scoring_hand and
-            #SMODS.find_card("j_tiwmig_large_small_boulder") > 0
-        ) then
-            for i = 1, #context.scoring_hand do
-                local oc = context.scoring_hand[i]
-                oc.base.id = oc.base.id == 2 and 14 or math.max(oc.base.id - 1, 2)
-            end
-            return_value = calc_joker_func(self, context)
-            for i = 1, #context.scoring_hand do
-                local oc = context.scoring_hand[i]
-                oc.base.id = oc.base.id == 14 and 2 or math.min(oc.base.id + 1, 14)
-            end
-        end
-    end
-
-    return return_value
-end

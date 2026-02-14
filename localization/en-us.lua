@@ -6,9 +6,17 @@ Joker = { -- START OF JOKERS
     j_tiwmig_generic_brand = {
         name = "Generic Brand Joker",
         text = {
-            "All shop prices",
-            "are {C:attention}#1#%{} off",
-            "{C:inactive}(rounded up){}",
+            "All shop prices are {C:attention}#1#% {}off",
+            "This discount {C:red}decreases {}by {C:attention}#2#%",
+            "when a boss blind is defeated"
+        }
+    },
+    j_tiwmig_generic_brand_gouged = {
+        name = "Generic Brand Joker",
+        text = {
+            "All shop prices are {C:attention}#1#% {}higher",
+            "This gouge {C:red}increases {}by {C:attention}#2#%",
+            "when a boss blind is defeated"
         }
     },
     j_tiwmig_bag_of_chips = {
@@ -21,8 +29,7 @@ Joker = { -- START OF JOKERS
     j_tiwmig_french_fries = {
         name = "French Fries",
         text = {
-            "{C:blue}+#1#{} Chips for the",
-            "next {C:attention}#2#{} hands",
+            "{C:blue}+#1#{} Chips for the next {C:attention}#2#{} hands",
             "Automatically combines with",
             "{C:attention}#3#{} or {C:attention}#4#{}"
         }
@@ -30,8 +37,7 @@ Joker = { -- START OF JOKERS
     j_tiwmig_gravy = {
         name = "Gravy",
         text = {
-            "{C:red}+#1#{} Mult for the",
-            "next {C:attention}#2#{} hands",
+            "{C:red}+#1#{} Mult for the next {C:attention}#2#{} hands",
             "Automatically combines with",
             "{C:attention}#3#{} or {C:attention}#4#{}"
         }
@@ -39,8 +45,7 @@ Joker = { -- START OF JOKERS
     j_tiwmig_cheese_curds = {
         name = "Cheese Curds",
         text = {
-            "Earn {C:money}$#1#{} for the",
-            "next {C:attention}#2#{} hands",
+            "Earn {C:money}$#1#{} for the next {C:attention}#2#{} hands",
             "Automatically combines with",
             "{C:attention}#3#{} or {C:attention}#4#{}"
         }
@@ -48,9 +53,8 @@ Joker = { -- START OF JOKERS
     j_tiwmig_frite_sauce = {
         name = "Frite Sauce",
         text = {
-            "{C:blue}+#1#{} Chips and",
-            "{C:red}+#2#{} Mult for the",
-            "next {C:attention}#3#{} hands",
+            "{C:blue}+#1#{} Chips and {C:red}+#2#{} Mult",
+            "for the next {C:attention}#3#{} hands",
             "Automatically combines",
             "with {C:attention}#4#{}"
         }
@@ -58,9 +62,8 @@ Joker = { -- START OF JOKERS
     j_tiwmig_cheesy_gravy = {
         name = "Cheesy Gravy",
         text = {
-            "{C:red}+#1#{} Mult and",
-            "earn {C:money}$#2#{} for the",
-            "next {C:attention}#3#{} hands",
+            "{C:red}+#1#{} Mult and earn {C:money}$#2#",
+            "for the next {C:attention}#3#{} hands",
             "Automatically combines",
             "with {C:attention}#4#{}"
         }
@@ -68,9 +71,8 @@ Joker = { -- START OF JOKERS
     j_tiwmig_chips_n_cheese = {
         name = "Chips n' Cheese",
         text = {
-            "Earn {C:money}$#1#{} and",
-            "{C:blue}+#2#{} for the",
-            "next {C:attention}#3#{} hands",
+            "Earn {C:money}$#1#{} and {C:blue}+#2# {}Chips",
+            "for the next {C:attention}#3#{} hands",
             "Automatically combines",
             "with {C:attention}#4#{}"
         }
@@ -98,8 +100,20 @@ Joker = { -- START OF JOKERS
             "Shoot on play; only {C:red}live{}",
             "shells give {X:mult,C:white}X#2#{} Mult",
             "{s:0.1,C:white}----",
-            "{s:0.7,C:inactive}#3# blank shell#4#. {s:0.7,C:red}#5# live.",
-            "{C:red}#6# shells remain{}"
+            "{s:0.7,C:inactive}#3# blank shells. {s:0.7,C:red}#4# live.",
+            "{C:red}#5# shells remain{}"
+        }
+    },
+    j_tiwmig_shotgun_singular = {
+        name = "Shotgun",
+        text = {
+            "2-#1# {C:inactive}blank{} and {C:red}live{} shells are",
+            "loaded in a random sequence",
+            "Shoot on play; only {C:red}live{}",
+            "shells give {X:mult,C:white}X#2#{} Mult",
+            "{s:0.1,C:white}----",
+            "{s:0.7,C:inactive}#3# blank shell. {s:0.7,C:red}#4# live.",
+            "{C:red}#5# shells remain{}"
         }
     },
     j_tiwmig_large_small_boulder = {
@@ -131,10 +145,18 @@ Joker = { -- START OF JOKERS
         name = "Spy Phone",
         text = {
             "During scoring, retriggers",
-            "the {C:attention}#1# Joker{}",
+            "the {C:attention}left Joker{}",
             "Side switches at end of round",
         }
-    }
+    },
+    j_tiwmig_spy_phone_right = {
+        name = "Spy Phone",
+        text = {
+            "During scoring, retriggers",
+            "the {C:attention}right Joker{}",
+            "Side switches at end of round",
+        }
+    },
 }, -- END OF JOKERS
 
 ---- END OF DESCRIPTIONS
@@ -146,7 +168,7 @@ dictionary = {
     k_tiwmig_poutine_eating = "Eating...",
     k_tiwmig_poutine_eaten = "Eaten!",
     k_tiwmig_shotgun_blank = "Blank...",
-    k_tiwmig_switch_side = "Side switch!"
+    k_tiwmig_switch_side = "Switch!"
 },
 
 v_dictionary = {
